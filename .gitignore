@@ -1,0 +1,12 @@
+.idea/
+__pycache/
+MNIST/
+FashionMNIST/
+experiment-results*/
+Log/
+optimal-para/
+paper-results/
+pdf/
+results_need_to_be_revised/
+covtype.data
+covtype_noniid.data
