@@ -2,7 +2,6 @@
 __pycache/
 MNIST/
 FashionMNIST/
-experiment-results*/
 Log/
 optimal-para/
 paper-results/
