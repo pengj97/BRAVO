@@ -171,7 +171,7 @@ def ours(setting, attack, dataset, test_acc_flag, exp_lambda):
 
         # Test
         if test_acc_flag:
-            if k % 200 == 0 or k == 1:
+            if k % 100 == 0 or k == 1:
                 acc = get_accuracy(workerPara[select], image_test, label_test)
                 acc_list.append(acc)
                 var = get_vars(Config.regular, workerPara)
@@ -198,4 +198,4 @@ def ours(setting, attack, dataset, test_acc_flag, exp_lambda):
 
 
 if __name__ == '__main__':
-    ours(setting='iid', attack=without_attacks, dataset='FashionMNIST', test_acc_flag=True, exp_lambda=False)
+    ours(setting='iid', attack=sign_flipping_attacks, dataset='FashionMNIST', test_acc_flag=True, exp_lambda=False)

@@ -49,7 +49,7 @@ optConfig = {
     'nodeSize': 100,
     'byzantineSize': 0,
 
-    'iterations': 5000,
+    'iterations': 20000,
     'decayWeight': 0.01,
 
     'batchSize':32,
@@ -95,15 +95,15 @@ BRIDGEConfig['learningStep'] = 0.005       # without attack
 # OursConfig['penaltyPara'] = 0.02          # Non-iid setting
 
 DrsaConfig = optConfig.copy()
-DrsaConfig['learningStep'] = 0.003
+DrsaConfig['learningStep'] = 0.005
 DrsaConfig['penaltyPara'] = 0.005
 
 DrsaSAGAConfig = optConfig.copy()
-DrsaSAGAConfig['learningStep'] = 0.001
+DrsaSAGAConfig['learningStep'] = 0.005
 DrsaSAGAConfig['penaltyPara'] = 0.005
 
 DrsaLSVRGConfig = optConfig.copy()
-DrsaLSVRGConfig['learningStep'] = 0.001
+DrsaLSVRGConfig['learningStep'] = 0.005
 DrsaLSVRGConfig['penaltyPara'] = 0.005
 
 DrsaGdConfig = optConfig.copy()
