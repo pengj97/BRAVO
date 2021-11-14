@@ -141,7 +141,7 @@ def ours(setting, attack, dataset, test_acc_flag, stepsize_experiment_flag):
 
         # Testing
         if test_acc_flag :
-            if k % 100 == 0 or k == 1 :
+            # if k % 200 == 0 or k == 1 :
                 acc = get_accuracy (workerPara[select], image_test, label_test)
                 acc_list.append (acc)
                 var = get_vars (Config.regular, workerPara)
@@ -172,4 +172,4 @@ def ours(setting, attack, dataset, test_acc_flag, stepsize_experiment_flag):
 
 
 if __name__ == '__main__':
-    ours(setting='iid', attack=without_attacks, dataset='FashionMNIST', test_acc_flag=True, stepsize_experiment_flag=0)
+    ours(setting='iid', attack=sign_flipping_attacks, dataset='FashionMNIST', test_acc_flag=True, stepsize_experiment_flag=0)

@@ -47,9 +47,9 @@ def metropolis_weight(G):
 
 optConfig = {
     'nodeSize': 100,
-    'byzantineSize': 0,
+    'byzantineSize': 20,
 
-    'iterations': 20000,
+    'iterations': 5000,
     'decayWeight': 0.01,
 
     'batchSize':32,
@@ -63,20 +63,22 @@ mnistConfig = {
     'classes': 10,
 }
 
+fashionmnistConfig = mnistConfig.copy()
+
 DPSGDConfig = optConfig.copy()
-DPSGDConfig['learningStep'] = 0.01       # without attack
+DPSGDConfig['learningStep'] = 0.001       # without attack
 # DPSGDConfig['learningStep'] = 0.18      # same-value attack
 # DPSGDConfig['learningStep'] = 0.5       # sign-flipping attack
 # DPSGDConfig['learningStep'] = 0.4         # Non-iid setting
 
 ByRDiEConfig = optConfig.copy()
-ByRDiEConfig['learningStep'] = 0.005      # without attack
+ByRDiEConfig['learningStep'] = 0.1      # without attack
 # ByRDiEConfig['learningStep'] = 0.18      # same-value attack
 # ByRDiEConfig['learningStep'] = 0.8       # sign-flipping attack
 # ByRDiEConfig['learningStep'] = 0.9       # Non-iid setting
 
 BRIDGEConfig = optConfig.copy()
-BRIDGEConfig['learningStep'] = 0.005       # without attack
+BRIDGEConfig['learningStep'] = 0.1     # without attack
 # BRIDGEConfig['learningStep'] = 0.9       # same-value attack
 # BRIDGEConfig['learningStep'] = 0.6       # sign-flipping attack
 # BRIDGEConfig['learningStep'] = 0.1       # Non-iid setting
@@ -95,16 +97,17 @@ BRIDGEConfig['learningStep'] = 0.005       # without attack
 # OursConfig['penaltyPara'] = 0.02          # Non-iid setting
 
 DrsaConfig = optConfig.copy()
-DrsaConfig['learningStep'] = 0.005
-DrsaConfig['penaltyPara'] = 0.005
+DrsaConfig['learningStep'] = 0.1
+DrsaConfig['penaltyPara'] = 0.0005   
 
 DrsaSAGAConfig = optConfig.copy()
 DrsaSAGAConfig['learningStep'] = 0.005
-DrsaSAGAConfig['penaltyPara'] = 0.005
+DrsaSAGAConfig['penaltyPara'] = 0.0005
 
 DrsaLSVRGConfig = optConfig.copy()
 DrsaLSVRGConfig['learningStep'] = 0.005
-DrsaLSVRGConfig['penaltyPara'] = 0.005
+DrsaLSVRGConfig['penaltyPara'] = 0.0005
+
 
 DrsaGdConfig = optConfig.copy()
 DrsaGdConfig['learningStep'] = 0.1

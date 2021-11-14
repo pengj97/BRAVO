@@ -161,7 +161,7 @@ def ours(setting, attack, dataset, test_acc_flag, exp_lambda):
                     count += 1
 
         if test_acc_flag :
-            if k % 100 == 0 or k == 1 :
+            # if k % 200 == 0 or k == 1 :
                 acc = get_accuracy (workerPara[select], image_test, label_test)
                 acc_list.append (acc)
                 var = get_vars (Config.regular, workerPara)

@@ -75,8 +75,8 @@ def bridge(setting, attack, dataset):
     :param attack: same-value attacks, sign-flipping attacks
                    sample-duplicating attacks(non-iid case)
     """
-    print(Config.byzantine)
-    print(Config.regular)
+    print("The set of Byzantine agents:", Config.byzantine)
+    print("The set of regular agents:", Config.regular)
 
     # Load the configurations
     conf = Config.DPSGDConfig.copy()
@@ -135,12 +135,12 @@ def bridge(setting, attack, dataset):
                     count += 1
 
         # Testing
-        if k % 200 == 0 or k == 1:
-            acc = get_accuracy(workerPara[select], image_test, label_test)
-            classification_accuracy.append(acc)
-            var = get_vars(Config.regular, workerPara)
-            variances.append(var)
-            logger.info('the {}th iteration acc: {}, vars: {}'.format(k, acc, var))
+        # if k % 200 == 0 or k == 1:
+        acc = get_accuracy(workerPara[select], image_test, label_test)
+        classification_accuracy.append(acc)
+        var = get_vars(Config.regular, workerPara)
+        variances.append(var)
+        logger.info('the {}th iteration acc: {}, vars: {}'.format(k, acc, var))
 
     print(classification_accuracy)
     print(variances)
@@ -151,4 +151,4 @@ def bridge(setting, attack, dataset):
 
 
 if __name__ == '__main__':
-    bridge(setting='iid', attack=without_attacks, dataset='MNIST')
+    bridge(setting='iid', attack=without_attacks, dataset='FashionMNIST')

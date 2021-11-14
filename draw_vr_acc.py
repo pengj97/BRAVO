@@ -109,9 +109,14 @@ def draw_fashionmnist(attack):
                    'sf': sign-flipping attacks
                    'sd': sample-duplicating attacks in non-i.i.d. case
     """
+    # set_iteration = np.linspace(1, 
+    #                 int((Config.optConfig['iterations'] * Config.optConfig['batchSize'] * Config.optConfig['nodeSize']) / Config.fashionmnistConfig['trainNum']), 
+    #                 Config.optConfig['iterations'])
+    # plt.xlabel('Number of epochs', fontsize=15)
 
-    methods = ['december', 'december-saga', 'december-lsvrg']
-    labels = ['DECEMBER', 'DECEMBER-SAGA', 'DECEMBER-LSVRG']
+    set_iteration = np.arange(1, Config.optConfig['iterations'] + 1)
+    methods = ['dpsgd', 'bridge', 'december', 'december-saga', 'december-lsvrg']
+    labels = ['DPSGD', 'BRIDGE', 'DECEMBER', 'DECEMBER-SAGA', 'DECEMBER-LSVRG']
 
     acc_list = []
     var_list = []
@@ -124,24 +129,24 @@ def draw_fashionmnist(attack):
 
     plt.figure(1)
     for i in range(len(methods)):
-        plt.plot(set_iteration, acc_list[i], color=colors[i], marker=markers[i], label=labels[i])
+        plt.plot(set_iteration, acc_list[i], color=colors[i], marker=markers[i], label=labels[i], markevery=500)
     plt.xticks(fontsize=15)
     plt.yticks(fontsize=15)
     plt.ylabel('Classification Accuracy', fontsize=15)
     plt.xlabel('Number of iterations', fontsize=15)
     plt.legend(fontsize=15)
-    # plt.savefig('pdf/acc-' + attack + '.pdf', bbox_inches='tight')
+    plt.savefig('pdf/fmnist-acc-' + attack + '.pdf', bbox_inches='tight')
 
     plt.figure(2)
     for i in range(len(methods)):
-        plt.plot(set_iteration, var_list[i], color=colors[i], marker=markers[i], label=labels[i])
+        plt.plot(set_iteration, var_list[i], color=colors[i], marker=markers[i], label=labels[i], markevery=500)
     plt.xticks(fontsize=15)
     plt.yticks(fontsize=12)
     plt.ylabel('Variance', fontsize=15)
     plt.xlabel('Number of iterations', fontsize=15)
     plt.yscale('log')
     plt.legend(fontsize=15)
-    # plt.savefig('pdf/var-' + attack + '.pdf', bbox_inches='tight')
+    # plt.savefig('pdf/fmnist-var-' + attack + '.pdf', bbox_inches='tight')
 
     plt.show()
 
@@ -149,7 +154,7 @@ def draw_fashionmnist(attack):
 if __name__ == '__main__':
     # draw('sd')
     # draw_imopp(attack='sd', method='saga')
-    draw_fashionmnist('wa')
+    draw_fashionmnist('sd')
 
 
 

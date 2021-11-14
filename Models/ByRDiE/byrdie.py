@@ -75,8 +75,8 @@ def byrdie(setting, attack, dataset):
     :param attack: same-value attacks, sign-flipping attacks
                    sample-duplicating attacks(non-iid case)
     """
-    print(Config.byzantine)
-    print(Config.regular)
+    print("The set of Byzantine agents:", Config.byzantine)
+    print("The set of regular agents:", Config.regular)
 
     # Load the configurations
     conf = Config.ByRDiEConfig.copy()
@@ -110,7 +110,7 @@ def byrdie(setting, attack, dataset):
     logger.info("Start!")
     while k < max_iteration:
         k += 1
-        random_dimension = np.random.choice(range(784), 100)
+        random_dimension = np.random.choice(range(784), 50)
 
         for d in random_dimension:
             for t in range(T):
@@ -140,15 +140,15 @@ def byrdie(setting, attack, dataset):
                             count += 1
 
         # Testing
-        if k % 200 == 0 or k == 1:
-            acc = get_accuracy(workerPara[select], image_test, label_test)
-            classification_accuracy.append(acc)
-            var = get_vars(Config.regular, workerPara)
-            variances.append(var)
-            logger.info('the {}th iteration acc: {}, vars: {}'.format(k, acc, var))
+        # if k % 200 == 0 or k == 1:
+        acc = get_accuracy(workerPara[select], image_test, label_test)
+        classification_accuracy.append(acc)
+        var = get_vars(Config.regular, workerPara)
+        variances.append(var)
+        logger.info('the {}th iteration acc: {}, vars: {}'.format(k, acc, var))
 
-    print(classification_accuracy)
-    print(variances)
+    # print(classification_accuracy)
+    # print(variances)
 
     # Save the experiment results
     output = open("../../experiment-results-"+dataset+"/byrdie" + last_str + "-" + str(conf['byzantineSize']) + ".pkl", "wb")
