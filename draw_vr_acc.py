@@ -115,7 +115,7 @@ def draw_fashionmnist(attack):
     # plt.xlabel('Number of epochs', fontsize=15)
 
     set_iteration = np.arange(1, Config.optConfig['iterations'] + 1)
-    methods = ['dpsgd', 'bridge', 'december', 'december-saga', 'december-lsvrg']
+    methods = ['dpsgd', 'bridge',  'december', 'december-saga', 'december-lsvrg']
     labels = ['DPSGD', 'BRIDGE', 'DECEMBER', 'DECEMBER-SAGA', 'DECEMBER-LSVRG']
 
     acc_list = []
@@ -135,7 +135,7 @@ def draw_fashionmnist(attack):
     plt.ylabel('Classification Accuracy', fontsize=15)
     plt.xlabel('Number of iterations', fontsize=15)
     plt.legend(fontsize=15)
-    plt.savefig('pdf/fmnist-acc-' + attack + '.pdf', bbox_inches='tight')
+    # plt.savefig('pdf/fmnist-acc-' + attack + '.pdf', bbox_inches='tight')
 
     plt.figure(2)
     for i in range(len(methods)):
@@ -154,7 +154,7 @@ def draw_fashionmnist(attack):
 if __name__ == '__main__':
     # draw('sd')
     # draw_imopp(attack='sd', method='saga')
-    draw_fashionmnist('sd')
+    draw_fashionmnist('ga')
 
 
 

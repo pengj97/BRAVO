@@ -5,6 +5,7 @@ sys.path.append("../../")
 import numpy as np
 import pickle
 import random
+from tqdm import tqdm
 from LoadMnist import getData, data_redistribute
 import Config
 from MainModel import Softmax, get_accuracy, get_vars, get_learning
@@ -89,13 +90,13 @@ def byrdie(setting, attack, dataset):
     image_train, label_train = getData('../../' + dataset + '/train-images.idx3-ubyte',
                                        '../../' + dataset + '/train-labels.idx1-ubyte')
 
+    # Rearrange the training data to simulate the non-i.i.d. case
+    if setting == 'noniid':
+        image_train, label_train = data_redistribute(image_train, label_train)
+
     # Get the testing data
     image_test, label_test = getData ('../../' + dataset + '/t10k-images.idx3-ubyte',
                                       '../../' + dataset + '/t10k-labels.idx1-ubyte')
-
-    # Get the testing data
-    image_test, label_test = getData('../../MNIST/t10k-images.idx3-ubyte',
-                                     '../../MNIST/t10k-labels.idx1-ubyte')
 
     # Parameter initialization
     workerPara = np.random.random((conf['nodeSize'], 10, 784))
@@ -108,8 +109,7 @@ def byrdie(setting, attack, dataset):
     select = random.choice(Config.regular)
 
     logger.info("Start!")
-    while k < max_iteration:
-        k += 1
+    for k in tqdm(range(1, max_iteration + 1)):
         random_dimension = np.random.choice(range(784), 50)
 
         for d in random_dimension:
@@ -156,7 +156,7 @@ def byrdie(setting, attack, dataset):
 
 
 if __name__ == '__main__':
-    byrdie(setting='noniid', attack=sample_duplicating_attacks, dataset='FashionMNIST')
+    byrdie(setting='iid', attack=without_attacks, dataset='FashionMNIST')
 
 
 

@@ -79,7 +79,7 @@ def bridge(setting, attack, dataset):
     print("The set of regular agents:", Config.regular)
 
     # Load the configurations
-    conf = Config.DPSGDConfig.copy()
+    conf = Config.BRIDGEConfig.copy()
     num_data = int(Config.mnistConfig['trainNum'] / conf['nodeSize'])
 
     classification_accuracy = []
@@ -142,8 +142,8 @@ def bridge(setting, attack, dataset):
         variances.append(var)
         logger.info('the {}th iteration acc: {}, vars: {}'.format(k, acc, var))
 
-    print(classification_accuracy)
-    print(variances)
+    # print(classification_accuracy)
+    # print(variances)
 
     # Save the experiment results
     output = open("../../experiment-results-"+dataset+"/bridge" + last_str + "-" + str(conf['byzantineSize']) + ".pkl", "wb")
@@ -151,4 +151,4 @@ def bridge(setting, attack, dataset):
 
 
 if __name__ == '__main__':
-    bridge(setting='iid', attack=without_attacks, dataset='FashionMNIST')
+    bridge(setting='iid', attack=sign_flipping_attacks, dataset='FashionMNIST')

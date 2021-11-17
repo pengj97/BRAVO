@@ -47,7 +47,7 @@ def metropolis_weight(G):
 
 optConfig = {
     'nodeSize': 100,
-    'byzantineSize': 20,
+    'byzantineSize': 0,
 
     'iterations': 5000,
     'decayWeight': 0.01,
@@ -66,13 +66,13 @@ mnistConfig = {
 fashionmnistConfig = mnistConfig.copy()
 
 DPSGDConfig = optConfig.copy()
-DPSGDConfig['learningStep'] = 0.001       # without attack
+DPSGDConfig['learningStep'] = 0.1       # without attack
 # DPSGDConfig['learningStep'] = 0.18      # same-value attack
 # DPSGDConfig['learningStep'] = 0.5       # sign-flipping attack
 # DPSGDConfig['learningStep'] = 0.4         # Non-iid setting
 
 ByRDiEConfig = optConfig.copy()
-ByRDiEConfig['learningStep'] = 0.1      # without attack
+ByRDiEConfig['learningStep'] = 1      # without attack
 # ByRDiEConfig['learningStep'] = 0.18      # same-value attack
 # ByRDiEConfig['learningStep'] = 0.8       # sign-flipping attack
 # ByRDiEConfig['learningStep'] = 0.9       # Non-iid setting
@@ -98,15 +98,15 @@ BRIDGEConfig['learningStep'] = 0.1     # without attack
 
 DrsaConfig = optConfig.copy()
 DrsaConfig['learningStep'] = 0.1
-DrsaConfig['penaltyPara'] = 0.0005   
+DrsaConfig['penaltyPara'] = 0.005   
 
 DrsaSAGAConfig = optConfig.copy()
 DrsaSAGAConfig['learningStep'] = 0.005
-DrsaSAGAConfig['penaltyPara'] = 0.0005
+DrsaSAGAConfig['penaltyPara'] = 0.005
 
 DrsaLSVRGConfig = optConfig.copy()
 DrsaLSVRGConfig['learningStep'] = 0.005
-DrsaLSVRGConfig['penaltyPara'] = 0.0005
+DrsaLSVRGConfig['penaltyPara'] = 0.005
 
 
 DrsaGdConfig = optConfig.copy()
