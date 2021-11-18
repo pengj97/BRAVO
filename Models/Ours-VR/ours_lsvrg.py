@@ -198,4 +198,4 @@ def ours(setting, attack, dataset, test_acc_flag, exp_lambda):
 
 
 if __name__ == '__main__':
-    ours(setting='noniid', attack=sample_duplicating_attacks, dataset='FashionMNIST', test_acc_flag=False, exp_lambda=False)
+    ours(setting='noniid', attack=sample_duplicating_attacks, dataset='MNIST', test_acc_flag=False, exp_lambda=False)

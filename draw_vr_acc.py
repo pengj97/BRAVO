@@ -3,10 +3,10 @@ import matplotlib.pyplot as plt
 import pickle
 import Config
 
-set_iteration_interval = []
+set_iteration = []
 for k in range(1, Config.optConfig['iterations']+1):
     if k % 200 == 0 or k == 1:
-        set_iteration_interval.append(k)
+        set_iteration.append(k)
 colors = ['black',  'skyblue', 'blue', 'purple', 'green', 'red']
 markers = ['h', 'v',  'x', '+', 's', 'o']
 
@@ -130,8 +130,7 @@ def draw_fashionmnist(attack):
             var_list.append(var)
 
     plt.figure(1)
-    plt.plot(set_iteration_interval, acc_list[0], color=colors[0], marker=markers[0], label=labels[0])
-    for i in range(1, len(methods)):
+    for i in range(len(methods)):
         plt.plot(set_iteration, acc_list[i], color=colors[i], marker=markers[i], label=labels[i], markevery=500)
     plt.xticks(fontsize=15)
     plt.yticks(fontsize=15)
@@ -141,8 +140,7 @@ def draw_fashionmnist(attack):
     plt.savefig('pdf/fmnist-acc-' + attack + '.pdf', bbox_inches='tight')
 
     plt.figure(2)
-    plt.plot(set_iteration_interval, var_list[0], color=colors[0], marker=markers[0], label=labels[0])
-    for i in range(1, len(methods)):
+    for i in range(len(methods)):
         plt.plot(set_iteration, var_list[i], color=colors[i], marker=markers[i], label=labels[i], markevery=500)
     plt.xticks(fontsize=15)
     plt.yticks(fontsize=12)
@@ -158,7 +156,7 @@ def draw_fashionmnist(attack):
 if __name__ == '__main__':
     # draw('ga')
     # draw_imopp(attack='sd', method='lsvrg')
-    draw_fashionmnist('ga')
+    draw_fashionmnist('sd')
 
 
 
