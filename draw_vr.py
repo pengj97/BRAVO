@@ -24,7 +24,7 @@ def draw_vr_distance(setting, attack, dataset):
     para_norm_lists = np.zeros((len(methods), Config.optConfig['iterations']))
 
     for i in range(len(methods)):
-        with open("experiment-results-"+dataset+"-2/"+methods[i]+"-"+attack+"-"+setting+"-para.pkl", "rb") as f:
+        with open("experiment-results-"+dataset+"/"+methods[i]+"-"+attack+"-"+setting+"-para.pkl", "rb") as f:
             para_norm = pickle.load(f)
             print(len(para_norm))
             para_norm_lists[i] = np.array(para_norm[:Config.optConfig['iterations']])
@@ -82,6 +82,6 @@ def test(setting, attack, dataset):
 
 
 if __name__ == '__main__':
-    draw_vr_distance(setting='noniid', attack='sd', dataset='FashionMNIST')
+    draw_vr_distance(setting='noniid', attack='sd', dataset='MNIST')
     # test(setting='noniid', attack='sd', dataset='MNIST')
     

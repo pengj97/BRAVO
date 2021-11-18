@@ -2,7 +2,6 @@ import os
 import sys
 os.chdir(sys.path[0])
 sys.path.append("../../")
-import time
 import numpy as np
 import pickle
 import random
@@ -109,7 +108,6 @@ def ours(setting, attack, dataset, test_acc_flag, stepsize_experiment_flag):
     select = random.choice(Config.regular)
 
     logger.info("Start!")
-    start_time = time.time()
     for k in tqdm(range(1, max_iteration + 1)):
         count = 0
         workerPara_memory = workerPara.copy()

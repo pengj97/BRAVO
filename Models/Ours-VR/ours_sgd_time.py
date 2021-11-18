@@ -57,7 +57,7 @@ class OursWorker(Softmax):
         self.para = self.para - self.lr * (aggregate_gradient + partial_gradient)
 
 
-def ours(setting, attack, dataset, test_acc_flag, stepsize_experiment_flag):
+def ours(setting, attack, dataset, test_acc_flag, stepsize_experiment_flag, record_time):
     """
     Run our proposed method in iid and non-iid settings under Byzantine attacks
 
@@ -76,6 +76,7 @@ def ours(setting, attack, dataset, test_acc_flag, stepsize_experiment_flag):
     acc_list = []
     var_list = []
     para_norm = []
+    time_list = []
 
     # Get the training data
     image_train, label_train = getData('../../' + dataset + '/train-images.idx3-ubyte',
@@ -143,7 +144,14 @@ def ours(setting, attack, dataset, test_acc_flag, stepsize_experiment_flag):
 
         # Testing
         if test_acc_flag :
-            # if k % 200 == 0 or k == 1 :
+            if record_time:
+                acc = get_accuracy (workerPara[select], image_test, label_test)
+                acc_list.append (acc)
+                this_time = time.time()
+                sum_time = this_time - start_time
+                time_list.append(sum_time)
+                logger.info ('the {}th iteration  time:{} test_acc:{}'.format (k, sum_time, acc))
+            else:
                 acc = get_accuracy (workerPara[select], image_test, label_test)
                 acc_list.append (acc)
                 var = get_vars (Config.regular, workerPara)
@@ -159,8 +167,12 @@ def ours(setting, attack, dataset, test_acc_flag, stepsize_experiment_flag):
 
     # Save the experiment results
     if test_acc_flag :
-        output = open ("../../experiment-results-"+dataset+"/december" + last_str + "-" + str(conf['byzantineSize']) + ".pkl", "wb")
-        pickle.dump ((acc_list, var_list), output, protocol=pickle.HIGHEST_PROTOCOL)
+        if record_time: 
+            output = open ("../../experiment-results-"+dataset+"/december" + last_str + "-" + str(conf['byzantineSize']) + "-time.pkl", "wb")
+            pickle.dump ((time_list, acc_list), output, protocol=pickle.HIGHEST_PROTOCOL)
+        else:
+            output = open ("../../experiment-results-"+dataset+"/december" + last_str + "-" + str(conf['byzantineSize']) + ".pkl", "wb")
+            pickle.dump ((acc_list, var_list), output, protocol=pickle.HIGHEST_PROTOCOL)
     else :
         if stepsize_experiment_flag == 0:
             output = open ("../../experiment-results-"+dataset+"-2/december-sqrt" + last_str + "-" + setting + "-para.pkl", "wb")
@@ -174,4 +186,5 @@ def ours(setting, attack, dataset, test_acc_flag, stepsize_experiment_flag):
 
 
 if __name__ == '__main__':
-    ours(setting='iid', attack=without_attacks, dataset='FashionMNIST', test_acc_flag=True, stepsize_experiment_flag=0)
+    ours(setting='iid', attack=without_attacks, dataset='MNIST', \
+        test_acc_flag=True, stepsize_experiment_flag=0, record_time=True)

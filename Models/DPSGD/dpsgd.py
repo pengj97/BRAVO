@@ -136,12 +136,12 @@ def dpsgd(setting, attack, dataset):
                     count += 1
 
         # Testing
-        # if k % 200 == 0 or k == 1:
-        acc = get_accuracy(workerPara[select], image_test, label_test)
-        classification_accuracy.append(acc)
-        var = get_vars(Config.regular, workerPara)
-        variances.append(var)
-        logger.info('the {}th iteration acc: {}, vars: {}'.format(k, acc, var))
+        if k % 200 == 0 or k == 1:
+            acc = get_accuracy(workerPara[select], image_test, label_test)
+            classification_accuracy.append(acc)
+            var = get_vars(Config.regular, workerPara)
+            variances.append(var)
+            logger.info('the {}th iteration acc: {}, vars: {}'.format(k, acc, var))
 
     # print(classification_accuracy)
     # print(variances)

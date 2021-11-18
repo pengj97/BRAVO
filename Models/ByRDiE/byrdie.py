@@ -156,7 +156,7 @@ def byrdie(setting, attack, dataset):
 
 
 if __name__ == '__main__':
-    byrdie(setting='iid', attack=without_attacks, dataset='FashionMNIST')
+    byrdie(setting='noniid', attack=sample_duplicating_attacks, dataset='FashionMNIST')
 
 
 
