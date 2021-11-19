@@ -161,15 +161,15 @@ def ours(setting, attack, dataset, test_acc_flag, stepsize_experiment_flag):
         pickle.dump ((acc_list, var_list), output, protocol=pickle.HIGHEST_PROTOCOL)
     else :
         if stepsize_experiment_flag == 0:
-            output = open ("../../experiment-results-"+dataset+"-2/december-sqrt" + last_str + "-" + setting + "-para.pkl", "wb")
+            output = open ("../../experiment-results-"+dataset+"/december-sqrt" + last_str + "-" + setting + "-para.pkl", "wb")
             pickle.dump (para_norm, output, protocol=pickle.HIGHEST_PROTOCOL)
         elif stepsize_experiment_flag == 1:
-            output = open ("../../experiment-results-"+dataset+"-2/december" + last_str + "-" + setting + "-para.pkl", "wb")
+            output = open ("../../experiment-results-"+dataset+"/december" + last_str + "-" + setting + "-para.pkl", "wb")
             pickle.dump (para_norm, output, protocol=pickle.HIGHEST_PROTOCOL)
         elif stepsize_experiment_flag == 2:
-            output = open ("../../experiment-results-"+dataset+"-2/december-constant" + last_str + "-" + setting + "-para.pkl", "wb")
+            output = open ("../../experiment-results-"+dataset+"/december-constant" + last_str + "-" + setting + "-para.pkl", "wb")
             pickle.dump (para_norm, output, protocol=pickle.HIGHEST_PROTOCOL)
 
 
 if __name__ == '__main__':
-    ours(setting='iid', attack=without_attacks, dataset='FashionMNIST', test_acc_flag=True, stepsize_experiment_flag=0)
+    ours(setting='noniid', attack=sample_duplicating_attacks, dataset='FashionMNIST', test_acc_flag=False, stepsize_experiment_flag=0)
