@@ -82,6 +82,10 @@ def test(setting, attack, dataset):
 
 
 if __name__ == '__main__':
+<<<<<<< HEAD
     draw_vr_distance(setting='iid', attack='sf', dataset='FashionMNIST')
+=======
+    draw_vr_distance(setting='noniid', attack='sd', dataset='MNIST')
+>>>>>>> b0219805b66388ced49ea00923ebe8b92ec56369
     # test(setting='noniid', attack='sd', dataset='MNIST')
     

@@ -49,7 +49,11 @@ optConfig = {
     'nodeSize': 100,
     'byzantineSize': 20,
 
+<<<<<<< HEAD
     'iterations': 50000,
+=======
+    'iterations': 5000,
+>>>>>>> b0219805b66388ced49ea00923ebe8b92ec56369
     'decayWeight': 0.01,
 
     'batchSize':32,

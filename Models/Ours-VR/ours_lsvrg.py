@@ -198,4 +198,8 @@ def ours(setting, attack, dataset, test_acc_flag, exp_lambda):
 
 
 if __name__ == '__main__':
+<<<<<<< HEAD
     ours(setting='iid', attack=sign_flipping_attacks, dataset='FashionMNIST', test_acc_flag=False, exp_lambda=False)
+=======
+    ours(setting='noniid', attack=sample_duplicating_attacks, dataset='FashionMNIST', test_acc_flag=False, exp_lambda=False)
+>>>>>>> b0219805b66388ced49ea00923ebe8b92ec56369
