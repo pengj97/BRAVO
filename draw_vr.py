@@ -15,7 +15,7 @@ def draw_vr_distance(setting, attack, dataset):
                    'noniid': sample-duplicating attacks in non-i.i.d. case
     """
     set_iteration = range(1, Config.optConfig['iterations'] + 1)
-    methods = ['december', 'december-sqrt', 'december-saga', 'december-lsvrg']
+    methods = ['december', 'december-sqrt', 'december-constant', 'december-saga', 'december-lsvrg']
     colors = ['green', 'gold', 'orange', 'blue', 'red']
     markers = ['^', 'v', '>', 's',  'o']
     labels = [r'DECEMBER ($ \alpha^k = 0.01 \ / \  k$)', r'DECEMBER ($\alpha^k = 0.01 \ /  \sqrt{k}$)', r'DECEMBER ($\alpha^k = 0.01$)', 'DECEMBER-SAGA', 'DECEMBER-LSVRG']
@@ -82,10 +82,5 @@ def test(setting, attack, dataset):
 
 
 if __name__ == '__main__':
-<<<<<<< HEAD
     draw_vr_distance(setting='iid', attack='sf', dataset='FashionMNIST')
-=======
-    draw_vr_distance(setting='noniid', attack='sd', dataset='MNIST')
->>>>>>> b0219805b66388ced49ea00923ebe8b92ec56369
     # test(setting='noniid', attack='sd', dataset='MNIST')
-    

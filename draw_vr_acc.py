@@ -115,10 +115,9 @@ def draw_fashionmnist(attack):
     # plt.xlabel('Number of epochs', fontsize=15)
 
     set_iteration = np.arange(1, Config.optConfig['iterations'] + 1)
-    methods = ['dpsgd', 'bridge',  'december', 'december-saga', 'december-lsvrg']
-    labels = ['DPSGD', 'BRIDGE', 'DECEMBER', 'DECEMBER-SAGA', 'DECEMBER-LSVRG']
-    colors = ['black', 'blue', 'purple', 'green', 'red']
-    markers = ['h', 'x', '+', 's', 'o']
+    methods = ['dpsgd', 'byrdie','bridge',  'december', 'december-saga', 'december-lsvrg']
+    labels = ['DPSGD', 'ByRDiE-S', 'BRIDGE-S',  'DECEMBER', 'DECEMBER-SAGA', 'DECEMBER-LSVRG']
+
 
     acc_list = []
     var_list = []
@@ -158,7 +157,7 @@ def draw_fashionmnist(attack):
 if __name__ == '__main__':
     # draw('ga')
     # draw_imopp(attack='sd', method='lsvrg')
-    draw_fashionmnist('ga')
+    draw_fashionmnist('wa')
 
 
 

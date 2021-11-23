@@ -172,4 +172,4 @@ def ours(setting, attack, dataset, test_acc_flag, stepsize_experiment_flag):
 
 
 if __name__ == '__main__':
-    ours(setting='noniid', attack=sample_duplicating_attacks, dataset='FashionMNIST', test_acc_flag=False, stepsize_experiment_flag=0)
+    ours(setting='iid', attack=sign_flipping_attacks, dataset='MNIST', test_acc_flag=False, stepsize_experiment_flag=2)

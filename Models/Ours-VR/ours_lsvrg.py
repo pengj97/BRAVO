@@ -193,13 +193,9 @@ def ours(setting, attack, dataset, test_acc_flag, exp_lambda):
             output = open ("../../experiment-results-"+dataset+"/december-lsvrg" + last_str + "-" + str(conf['byzantineSize']) + ".pkl", "wb")
             pickle.dump((acc_list, var_list), output, protocol=pickle.HIGHEST_PROTOCOL)
     else:
-        output = open("../../experiment-results-"+dataset+"-2/december-lsvrg" + last_str + "-" + setting + "-para.pkl", "wb")
+        output = open("../../experiment-results-"+dataset+"/december-lsvrg" + last_str + "-" + setting + "-para.pkl", "wb")
         pickle.dump(para_norm, output, protocol=pickle.HIGHEST_PROTOCOL)
 
 
 if __name__ == '__main__':
-<<<<<<< HEAD
-    ours(setting='iid', attack=sign_flipping_attacks, dataset='FashionMNIST', test_acc_flag=False, exp_lambda=False)
-=======
-    ours(setting='noniid', attack=sample_duplicating_attacks, dataset='FashionMNIST', test_acc_flag=False, exp_lambda=False)
->>>>>>> b0219805b66388ced49ea00923ebe8b92ec56369
+    ours(setting='iid', attack=sign_flipping_attacks, dataset='MNIST', test_acc_flag=False, exp_lambda=False)
