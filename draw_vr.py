@@ -82,5 +82,5 @@ def test(setting, attack, dataset):
 
 
 if __name__ == '__main__':
-    draw_vr_distance(setting='iid', attack='sf', dataset='FashionMNIST')
+    draw_vr_distance(setting='noniid', attack='sd', dataset='MNIST')
     # test(setting='noniid', attack='sd', dataset='MNIST')

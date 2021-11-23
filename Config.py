@@ -101,11 +101,11 @@ DrsaConfig['learningStep'] = 0.01
 DrsaConfig['penaltyPara'] = 0.0022   
 
 DrsaSAGAConfig = optConfig.copy()
-DrsaSAGAConfig['learningStep'] = 0.0015
+DrsaSAGAConfig['learningStep'] = 0.005
 DrsaSAGAConfig['penaltyPara'] = 0.0022
 
 DrsaLSVRGConfig = optConfig.copy()
-DrsaLSVRGConfig['learningStep'] = 0.0015
+DrsaLSVRGConfig['learningStep'] = 0.005
 DrsaLSVRGConfig['penaltyPara'] = 0.0022
 
 
