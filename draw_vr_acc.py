@@ -22,21 +22,27 @@ def draw(attack):
                    'sd': sample-duplicating attacks in non-i.i.d. case
     """
 
-    methods = ['dpsgd', 'byrdie_100_v4', 'bridge', 'december', 'december-saga', 'december-lsvrg']
+    methods = ['dpsgd', 'byrdie', 'bridge', 'december', 'december-saga', 'december-lsvrg']
     labels = ['DPSGD', 'ByRDiE-S', 'BRIDGE-S',  'DECEMBER', 'DECEMBER-SAGA', 'DECEMBER-LSVRG']
 
     acc_list = []
     var_list = []
 
     for i in range(len(methods)):
-        with open("experiment-results-2/" + methods[i] + "-" + attack + ".pkl", "rb") as f:
-            acc, var = pickle.load(f)
-            acc_list.append(acc)
-            var_list.append(var)
+        if i in [0, 1, 2, 3]:
+            with open("experiment-results-MNIST/" + methods[i] + "-" + attack + ".pkl", "rb") as f:
+                acc, var = pickle.load(f)
+                acc_list.append(acc)
+                var_list.append(var)
+        else:
+            with open("experiment-results-MNIST/" + methods[i] + "-" + attack + "-20.pkl", "rb") as f:
+                acc, var = pickle.load(f)
+                acc_list.append(acc)
+                var_list.append(var)
 
     plt.figure(1)
     for i in range(len(methods)):
-        plt.plot(set_iteration, acc_list[i], color=colors[i], marker=markers[i], label=labels[i])
+        plt.plot(set_iteration_interval, acc_list[i], color=colors[i], marker=markers[i], label=labels[i])
     plt.xticks(fontsize=15)
     plt.yticks(fontsize=15)
     plt.ylabel('Classification Accuracy', fontsize=15)
@@ -46,7 +52,7 @@ def draw(attack):
 
     plt.figure(2)
     for i in range(len(methods)):
-        plt.plot(set_iteration, var_list[i], color=colors[i], marker=markers[i], label=labels[i])
+        plt.plot(set_iteration_interval, var_list[i], color=colors[i], marker=markers[i], label=labels[i])
     plt.xticks(fontsize=15)
     plt.yticks(fontsize=12)
     plt.ylabel('Variance', fontsize=15)
@@ -155,9 +161,9 @@ def draw_fashionmnist(attack):
 
 
 if __name__ == '__main__':
-    # draw('ga')
+    draw('sf')
     # draw_imopp(attack='sd', method='lsvrg')
-    draw_fashionmnist('wa')
+    # draw_fashionmnist('wa')
 
 
 

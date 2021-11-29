@@ -41,6 +41,20 @@ class Softmax():
         partial_gradient = - np.dot((Y.T - pro), X) / batchsize + self.config['decayWeight'] * self.para
         return partial_gradient
 
+    def cal_inner_variation(self, image, label):
+        full_gradient = self.cal_batch_grad(image, label)
+        inner_variation = 0
+        for i in range(len(label)):
+            X = np.array(image[i: i + 1])
+            Y = np.array(label[i: i + 1])
+            Y = self.one_hot(Y)
+            t = np.dot(self.para, X.T)
+            t = t - np.max(t, axis=0)
+            pro = np.exp(t) / np.sum(np.exp(t), axis=0)
+            partial_gradient = - np.dot((Y.T - pro), X) + self.config['decayWeight'] * self.para
+            inner_variation += np.linalg.norm(partial_gradient - full_gradient) ** 2 / len(label)
+        return inner_variation
+
     def cal_batch_grad(self, image, label):
         """
         Compute batch gradient

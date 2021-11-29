@@ -5,13 +5,14 @@ sys.path.append("../../")
 import numpy as np
 import pickle
 import random
-from tqdm import tqdm
 from LoadMnist import getData, data_redistribute
+from tqdm import tqdm
 import Config
 from MainModel import Softmax, get_accuracy, get_vars, get_learning
-from Attacks import without_attacks, same_value_attacks, \
-    sign_flipping_attacks, sample_duplicating_attacks, gaussian_attacks
+from Attacks import without_attacks, same_value_attacks, gaussian_attacks, \
+    sign_flipping_attacks, sample_duplicating_attacks
 import logging.config
+
 
 logging.config.fileConfig(fname='..\\..\\Log\\loginit.ini', disable_existing_loggers=False)
 logger = logging.getLogger("infoLogger")
@@ -19,7 +20,7 @@ logger = logging.getLogger("infoLogger")
 
 class OursWorker(Softmax):
 
-    def __init__(self, para, id, workerPara, config, lr):
+    def __init__(self, para, id, workerPara, config, lr, k):
         """
         Initialize the solver for regular workers
 
@@ -33,10 +34,27 @@ class OursWorker(Softmax):
         self.id = id
         self.workerPara = workerPara
         self.lr = lr
+        self.iter = k
 
-    def saga(self, image, label) :
-        # 计算原始随机梯度
-        select = np.random.randint (len (label))
+    def lsvrg(self, image, label):
+        # 0时刻求全梯度
+        if self.iter == 1:
+            snapshot_fullGrad = self.cal_batch_grad(image, label)
+            self.config['snapshot_fullGrad'][self.id] = snapshot_fullGrad
+
+        # 依概率1/n取全梯度
+        pro = np.random.rand()
+        if pro >= 1 / len(label):
+            snapshot_para = self.config['snapshot_para'][self.id]
+            snapshot_fullGrad = self.config['snapshot_fullGrad'][self.id]
+        else:
+            snapshot_para = self.para.copy()
+            snapshot_fullGrad = self.cal_batch_grad(image, label)
+            self.config['snapshot_para'][self.id] = snapshot_para
+            self.config['snapshot_fullGrad'][self.id] = snapshot_fullGrad
+
+        # 计算随机梯度
+        select = np.random.randint (len(label))
         batchsize = self.config['batchSize']
         X = np.array (image[select : select + batchsize])
         Y = np.array (label[select : select + batchsize])
@@ -46,22 +64,34 @@ class OursWorker(Softmax):
         pro = np.exp (t) / np.sum (np.exp (t), axis=0)
         partial_gradient = - np.dot ((Y.T - pro), X) / batchsize + self.config['decayWeight'] * self.para
 
-        # 计算$\nabla f(x_i^k, \xi_i^k) - \nabla(\fi_i^k, \xi_i^k)$的差值
-        if '{}'.format (select) in self.config['gradientTable'][self.id] :
-            dvalue = partial_gradient - self.config['gradientTable'][self.id]['%d' % select]
-        else :
-            dvalue = partial_gradient
+        # 计算snapshot的随机梯度
+        t = np.dot (snapshot_para, X.T)
+        t = t - np.max (t, axis=0)
+        pro = np.exp (t) / np.sum (np.exp (t), axis=0)
+        partial_gradient_snapshot = - np.dot ((Y.T - pro), X) / batchsize + self.config[
+            'decayWeight'] * snapshot_para
 
-        # 更新梯度表
-        self.config['gradientTable'][self.id]['{}'.format (select)] = partial_gradient
+        inner_var = 0
+        full_grad = self.cal_batch_grad(image, label)
 
-        # 利用SAGA方法得到梯度的估计值
-        partial_gradient = dvalue + self.config['gradientEstimate'][self.id]
+        for i in range(len(label)):
+            X = np.array (image[i: i + 1])
+            Y = np.array (label[i: i + 1])
+            Y = self.one_hot (Y)
+            t = np.dot (self.para, X.T)
+            t = t - np.max (t, axis=0)
+            pro = np.exp (t) / np.sum (np.exp (t), axis=0)
+            partial_grad = - np.dot ((Y.T - pro), X) / batchsize + self.config['decayWeight'] * self.para
 
-        # 更新$\bar{g}_i^k$
-        self.config['gradientEstimate'][self.id] += dvalue / len (label)
-    
-        return partial_gradient
+            # 计算snapshot的随机梯度
+            t = np.dot (snapshot_para, X.T)
+            t = t - np.max (t, axis=0)
+            pro = np.exp (t) / np.sum (np.exp (t), axis=0)
+            partial_grad_snapshot = - np.dot ((Y.T - pro), X) / batchsize + self.config[
+                'decayWeight'] * snapshot_para
+            inner_var += np.linalg.norm(partial_grad - partial_grad_snapshot + snapshot_fullGrad - full_grad) ** 2 / len(label)
+
+        return inner_var, partial_gradient - partial_gradient_snapshot + snapshot_fullGrad
 
     def aggregate(self):
         """
@@ -76,10 +106,10 @@ class OursWorker(Softmax):
         return aggregate_gradient
 
     def train(self, image, label):
-        partial_gradient = self.saga(image, label)
+        inner_var, partial_gradient = self.lsvrg(image, label)
         aggregate_gradient = self.aggregate()
         self.para = self.para - self.lr * (aggregate_gradient + partial_gradient)
-
+        return inner_var
 
 def ours(setting, attack, dataset, test_acc_flag, exp_lambda):
     """
@@ -93,12 +123,13 @@ def ours(setting, attack, dataset, test_acc_flag, exp_lambda):
     print("The set of regular agents:", Config.regular)
 
     # Load the configurations
-    conf = Config.DrsaSAGAConfig.copy()
+    conf = Config.DrsaLSVRGConfig.copy()
     num_data = int(Config.mnistConfig['trainNum'] / conf['nodeSize'])
 
     loss_list = []
     acc_list = []
     var_list = []
+    inner_var_list = []
     para_norm = []
 
     # Get the training data
@@ -128,8 +159,8 @@ def ours(setting, attack, dataset, test_acc_flag, exp_lambda):
     # Parameter initialization
     workerPara = np.zeros((conf['nodeSize'], 10, 784))
 
-    conf['gradientTable'] = [{} for _ in range(conf['nodeSize'])]
-    conf['gradientEstimate'] = np.zeros((conf['nodeSize'], 10, 784))
+    conf['snapshot_fullGrad'] = np.zeros((conf['nodeSize'], 10, 784))
+    conf['snapshot_para'] = workerPara.copy()
 
     # Start training
     max_iteration = conf['iterations']
@@ -137,7 +168,6 @@ def ours(setting, attack, dataset, test_acc_flag, exp_lambda):
 
     logger.info("Start!")
     for k in tqdm(range(1, max_iteration + 1)):
-
         count = 0
         workerPara_memory = workerPara.copy()
         lr = conf['learningStep']
@@ -145,47 +175,38 @@ def ours(setting, attack, dataset, test_acc_flag, exp_lambda):
         # Byzantine attacks
         workerPara_memory, last_str = attack(workerPara_memory)
 
+        inner_var = 0
+
         # x_i^{k+1} = x_i^k - lr * g_i^k
         for id in range(conf['nodeSize']):
             para = workerPara[id]
-            model = OursWorker(para, id, workerPara_memory, conf, lr)
+            model = OursWorker(para, id, workerPara_memory, conf, lr, k)
             if setting == 'iid':
-                model.train(image_train[id * num_data: (id + 1) * num_data],
-                            label_train[id * num_data: (id + 1) * num_data])
+                inner_var_agent = model.train(image_train[id * num_data: (id + 1) * num_data],
+                                        label_train[id * num_data: (id + 1) * num_data])
                 workerPara[id] = model.get_para
+
             elif setting == 'noniid':
                 if id in Config.regular:
-                    model.train(image_train[count * num_data : (count + 1) * num_data],
+                    inner_var_agent = model.train(image_train[count * num_data : (count + 1) * num_data],
                                 label_train[count * num_data : (count + 1) * num_data])
                     workerPara[id] = model.get_para
                     count += 1
+            inner_var = max(inner_var, inner_var_agent)
+        inner_var_list.append(inner_var)
 
-        if test_acc_flag :
-            if k % 200 == 0 or k == 1 :
-                acc = get_accuracy (workerPara[select], image_test, label_test)
-                acc_list.append (acc)
-                var = get_vars (Config.regular, workerPara)
-                var_list.append (var)
-                logger.info ('the {}th iteration  test_acc:{} variance:{}'.format (k, acc, var))
-
-        else :
-            W_regular_norm = 0
-            for i in Config.regular :
-                W_regular_norm += np.linalg.norm (workerPara[i] - para_star) ** 2
-            para_norm.append (W_regular_norm)
-            # logger.info ('the {}th iteration para_norm: {}'.format (k, W_regular_norm))
-
-    # Save the experiment results
-    if test_acc_flag :
-        if exp_lambda:
-            output = open ("../../experiment-results-"+dataset+"/december-saga" + last_str + "-lambda-" + str(conf['penaltyPara']) + ".pkl", "wb")
-            pickle.dump ((acc_list, var_list), output, protocol=pickle.HIGHEST_PROTOCOL)
+        # Test
+        if test_acc_flag:
+            inner_var_list.append(inner_var)
+            logger.info ('the {}th iteration inner_var:{}'.format (k, inner_var))
         else:
-            output = open ("../../experiment-results-"+dataset+"/december-saga" + last_str + "-" + str(conf['byzantineSize']) + ".pkl", "wb")
-            pickle.dump ((acc_list, var_list), output, protocol=pickle.HIGHEST_PROTOCOL)
-    else :
-        output = open ("../../experiment-results-"+ dataset +"-2/december-saga" + last_str + "-" + setting + "-para.pkl", "wb")
-        pickle.dump (para_norm, output, protocol=pickle.HIGHEST_PROTOCOL)
+            W_regular_norm = 0
+            for i in Config.regular:
+                W_regular_norm += np.linalg.norm(workerPara[i] - para_star) ** 2
+            para_norm.append(W_regular_norm)
+
+    output = open ("../../experiment-results-"+dataset+"/december-lsvrg" + last_str + "-" + str(conf['learningStep']) + "-inner-var-new.pkl", "wb")
+    pickle.dump (inner_var_list, output, protocol=pickle.HIGHEST_PROTOCOL)
 
 
 if __name__ == '__main__':

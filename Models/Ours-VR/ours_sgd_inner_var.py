@@ -71,9 +71,7 @@ def ours(setting, attack, dataset, test_acc_flag, stepsize_experiment_flag):
     conf = Config.DrsaConfig.copy()
     num_data = int(Config.mnistConfig['trainNum'] / conf['nodeSize'])
 
-    loss_list = []
-    acc_list = []
-    var_list = []
+    inner_var_list = []
     para_norm = []
 
     # Get the training data
@@ -124,6 +122,8 @@ def ours(setting, attack, dataset, test_acc_flag, stepsize_experiment_flag):
         # Byzantine attacks
         workerPara_memory, last_str = attack(workerPara_memory)
 
+        inner_var = 0
+
         # x_i^{k+1} = x_i^k - lr * g_i^k
         for id in range(conf['nodeSize']):
             para = workerPara[id]
@@ -132,6 +132,10 @@ def ours(setting, attack, dataset, test_acc_flag, stepsize_experiment_flag):
                 model.train(image_train[id * num_data: (id + 1) * num_data],
                             label_train[id * num_data: (id + 1) * num_data])
                 workerPara[id] = model.get_para
+                if id in Config.regular:
+                    inner_var_agent = model.cal_inner_variation(image_train[id * num_data: (id + 1) * num_data],
+                                                                label_train[id * num_data: (id + 1) * num_data])
+                    inner_var = max(inner_var, inner_var_agent)
             elif setting == 'noniid':
                 if id in Config.regular:
                     model.train(image_train[count * num_data : (count + 1) * num_data],
@@ -141,35 +145,18 @@ def ours(setting, attack, dataset, test_acc_flag, stepsize_experiment_flag):
 
         # Testing
         if test_acc_flag :
-            # if k % 200 == 0 or k == 1 :
-                acc = get_accuracy (workerPara[select], image_test, label_test)
-                acc_list.append (acc)
-                var = get_vars (Config.regular, workerPara)
-                var_list.append (var)
-                logger.info ('the {}th iteration  test_acc:{} variance:{}'.format (k, acc, var))
+            inner_var_list.append(inner_var)
+            logger.info ('the {}th iteration inner_var:{}'.format (k, inner_var))
 
         else :
             W_regular_norm = 0
             for i in Config.regular :
                 W_regular_norm += np.linalg.norm (workerPara[i] - para_star) ** 2
             para_norm.append (W_regular_norm)
-            # logger.info ('the {}th iteration para_norm: {}'.format (k, W_regular_norm))
 
-    # Save the experiment results
-    if test_acc_flag :
-        output = open ("../../experiment-results-"+dataset+"/december" + last_str + "-" + str(conf['byzantineSize']) + ".pkl", "wb")
-        pickle.dump ((acc_list, var_list), output, protocol=pickle.HIGHEST_PROTOCOL)
-    else :
-        if stepsize_experiment_flag == 0:
-            output = open ("../../experiment-results-"+dataset+"/december-sqrt" + last_str + "-" + setting + "-para.pkl", "wb")
-            pickle.dump (para_norm, output, protocol=pickle.HIGHEST_PROTOCOL)
-        elif stepsize_experiment_flag == 1:
-            output = open ("../../experiment-results-"+dataset+"/december" + last_str + "-" + setting + "-para.pkl", "wb")
-            pickle.dump (para_norm, output, protocol=pickle.HIGHEST_PROTOCOL)
-        elif stepsize_experiment_flag == 2:
-            output = open ("../../experiment-results-"+dataset+"/december-constant" + last_str + "-" + setting + "-para.pkl", "wb")
-            pickle.dump (para_norm, output, protocol=pickle.HIGHEST_PROTOCOL)
+    output = open ("../../experiment-results-"+dataset+"/december" + last_str + "-inner-var.pkl", "wb")
+    pickle.dump (inner_var_list, output, protocol=pickle.HIGHEST_PROTOCOL)
 
 
 if __name__ == '__main__':
-    ours(setting='iid', attack=without_attacks, dataset='FashionMNIST', test_acc_flag=True, stepsize_experiment_flag=2)
+    ours(setting='iid', attack=without_attacks, dataset='MNIST', test_acc_flag=True, stepsize_experiment_flag=2)

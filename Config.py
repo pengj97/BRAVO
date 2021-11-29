@@ -47,9 +47,9 @@ def metropolis_weight(G):
 
 optConfig = {
     'nodeSize': 100,
-    'byzantineSize': 20,
+    'byzantineSize': 0,
 
-    'iterations': 40000,
+    'iterations': 5000,
     'decayWeight': 0.01,
 
     'batchSize':32,
@@ -98,15 +98,15 @@ BRIDGEConfig['learningStep'] = 0.1     # without attack
 
 DrsaConfig = optConfig.copy()
 DrsaConfig['learningStep'] = 0.01
-DrsaConfig['penaltyPara'] = 0.0022   
+DrsaConfig['penaltyPara'] = 0.005   
 
 DrsaSAGAConfig = optConfig.copy()
-DrsaSAGAConfig['learningStep'] = 0.005
-DrsaSAGAConfig['penaltyPara'] = 0.0022
+DrsaSAGAConfig['learningStep'] = 0.01
+DrsaSAGAConfig['penaltyPara'] = 0.005
 
 DrsaLSVRGConfig = optConfig.copy()
-DrsaLSVRGConfig['learningStep'] = 0.005
-DrsaLSVRGConfig['penaltyPara'] = 0.0022
+DrsaLSVRGConfig['learningStep'] = 0.01
+DrsaLSVRGConfig['penaltyPara'] = 0.005
 
 
 DrsaGdConfig = optConfig.copy()
