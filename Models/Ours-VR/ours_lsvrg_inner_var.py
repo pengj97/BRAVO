@@ -37,43 +37,48 @@ class OursWorker(Softmax):
         self.iter = k
 
     def lsvrg(self, image, label):
+        full_grad = self.cal_batch_grad(image, label)
+        partial_gradient = np.zeros_like(full_grad)
+        snapshot_fullGrad = np.zeros_like(full_grad)
+        snapshot_para = np.zeros_like(self.para)
         # 0时刻求全梯度
         if self.iter == 1:
-            snapshot_fullGrad = self.cal_batch_grad(image, label)
+            snapshot_fullGrad = full_grad
             self.config['snapshot_fullGrad'][self.id] = snapshot_fullGrad
 
-        # 依概率1/n取全梯度
-        pro = np.random.rand()
-        if pro >= 1 / len(label):
-            snapshot_para = self.config['snapshot_para'][self.id]
-            snapshot_fullGrad = self.config['snapshot_fullGrad'][self.id]
         else:
-            snapshot_para = self.para.copy()
-            snapshot_fullGrad = self.cal_batch_grad(image, label)
-            self.config['snapshot_para'][self.id] = snapshot_para
-            self.config['snapshot_fullGrad'][self.id] = snapshot_fullGrad
+            # 依概率1/n取全梯度
+            pro = np.random.rand()
+            if pro >= 1 / len(label):
+                snapshot_para = self.config['snapshot_para'][self.id]
+                snapshot_fullGrad = self.config['snapshot_fullGrad'][self.id]
+            else:
+                snapshot_para = self.para.copy()
+                snapshot_fullGrad = full_grad
+                self.config['snapshot_para'][self.id] = snapshot_para
+                self.config['snapshot_fullGrad'][self.id] = snapshot_fullGrad
 
-        # 计算随机梯度
-        select = np.random.randint (len(label))
-        batchsize = self.config['batchSize']
-        X = np.array (image[select : select + batchsize])
-        Y = np.array (label[select : select + batchsize])
-        Y = self.one_hot (Y)
-        t = np.dot (self.para, X.T)
-        t = t - np.max (t, axis=0)
-        pro = np.exp (t) / np.sum (np.exp (t), axis=0)
-        partial_gradient = - np.dot ((Y.T - pro), X) / batchsize + self.config['decayWeight'] * self.para
+            # 计算随机梯度
+            select = np.random.randint (len(label))
+            # batchsize = self.config['batchSize']
+            batchsize = 1
+            X = np.array (image[select : select + batchsize])
+            Y = np.array (label[select : select + batchsize])
+            Y = self.one_hot (Y)
+            t = np.dot (self.para, X.T)
+            t = t - np.max (t, axis=0)
+            pro = np.exp (t) / np.sum (np.exp (t), axis=0)
+            partial_gradient = - np.dot ((Y.T - pro), X) / batchsize + self.config['decayWeight'] * self.para
 
-        # 计算snapshot的随机梯度
-        t = np.dot (snapshot_para, X.T)
-        t = t - np.max (t, axis=0)
-        pro = np.exp (t) / np.sum (np.exp (t), axis=0)
-        partial_gradient_snapshot = - np.dot ((Y.T - pro), X) / batchsize + self.config[
-            'decayWeight'] * snapshot_para
+            # 计算snapshot的随机梯度
+            t = np.dot (snapshot_para, X.T)
+            t = t - np.max (t, axis=0)
+            pro = np.exp (t) / np.sum (np.exp (t), axis=0)
+            partial_gradient_snapshot = - np.dot ((Y.T - pro), X) / batchsize + self.config[
+                'decayWeight'] * snapshot_para
+            partial_gradient = partial_gradient - partial_gradient_snapshot + snapshot_fullGrad
 
         inner_var = 0
-        full_grad = self.cal_batch_grad(image, label)
-
         for i in range(len(label)):
             X = np.array (image[i: i + 1])
             Y = np.array (label[i: i + 1])
@@ -81,17 +86,42 @@ class OursWorker(Softmax):
             t = np.dot (self.para, X.T)
             t = t - np.max (t, axis=0)
             pro = np.exp (t) / np.sum (np.exp (t), axis=0)
-            partial_grad = - np.dot ((Y.T - pro), X) / batchsize + self.config['decayWeight'] * self.para
+            partial_grad = - np.dot ((Y.T - pro), X) + self.config['decayWeight'] * self.para
 
             # 计算snapshot的随机梯度
             t = np.dot (snapshot_para, X.T)
             t = t - np.max (t, axis=0)
             pro = np.exp (t) / np.sum (np.exp (t), axis=0)
-            partial_grad_snapshot = - np.dot ((Y.T - pro), X) / batchsize + self.config[
+            partial_grad_snapshot = - np.dot ((Y.T - pro), X) + self.config[
                 'decayWeight'] * snapshot_para
-            inner_var += np.linalg.norm(partial_grad - partial_grad_snapshot + snapshot_fullGrad - full_grad) ** 2 / len(label)
+            partial_grad = partial_grad - partial_grad_snapshot + snapshot_fullGrad
+            inner_var += np.linalg.norm(partial_grad - full_grad) ** 2 / len(label)
 
-        return inner_var, partial_gradient - partial_gradient_snapshot + snapshot_fullGrad
+        return inner_var, partial_gradient
+
+    def cal_inner_var_vr(self, image, label):
+        inner_var = 0
+        full_grad = self.cal_batch_grad(image, label)
+        snapshot_para = self.config['snapshot_para'][self.id]
+        snapshot_fullGrad = self.config['snapshot_fullGrad'][self.id]
+        for i in range(len(label)):
+            X = np.array (image[i: i + 1])
+            Y = np.array (label[i: i + 1])
+            Y = self.one_hot (Y)
+            t = np.dot (self.para, X.T)
+            t = t - np.max (t, axis=0)
+            pro = np.exp (t) / np.sum (np.exp (t), axis=0)
+            partial_grad = - np.dot ((Y.T - pro), X) + self.config['decayWeight'] * self.para
+
+            # 计算snapshot的随机梯度
+            t = np.dot (snapshot_para, X.T)
+            t = t - np.max (t, axis=0)
+            pro = np.exp (t) / np.sum (np.exp (t), axis=0)
+            partial_grad_snapshot = - np.dot ((Y.T - pro), X) + self.config[
+                'decayWeight'] * snapshot_para
+            partial_grad = partial_grad - partial_grad_snapshot + snapshot_fullGrad
+            inner_var += np.linalg.norm(partial_grad - full_grad) ** 2 / len(label)
+        return inner_var
 
     def aggregate(self):
         """
@@ -192,8 +222,9 @@ def ours(setting, attack, dataset, test_acc_flag, exp_lambda):
                                 label_train[count * num_data : (count + 1) * num_data])
                     workerPara[id] = model.get_para
                     count += 1
-            inner_var = max(inner_var, inner_var_agent)
-        inner_var_list.append(inner_var)
+            if id in Config.regular:
+                inner_var += inner_var_agent / len(Config.regular)
+        # inner_var_list.append(inner_var)
 
         # Test
         if test_acc_flag:
@@ -205,7 +236,7 @@ def ours(setting, attack, dataset, test_acc_flag, exp_lambda):
                 W_regular_norm += np.linalg.norm(workerPara[i] - para_star) ** 2
             para_norm.append(W_regular_norm)
 
-    output = open ("../../experiment-results-"+dataset+"/december-lsvrg" + last_str + "-" + str(conf['learningStep']) + "-inner-var-new.pkl", "wb")
+    output = open ("../../experiment-results-"+dataset+"-2/december-lsvrg" + last_str + "-" + str(conf['learningStep']) + "-inner-var-new.pkl", "wb")
     pickle.dump (inner_var_list, output, protocol=pickle.HIGHEST_PROTOCOL)
 
 

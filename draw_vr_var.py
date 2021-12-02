@@ -15,9 +15,9 @@ def draw(attack):
                    'sd': sample-duplicating attacks in non-i.i.d. case
     """
 
-    methods = ['december', 'december', 'december-lsvrg', 'december-lsvrg']
+    methods = ['december', 'december', 'december-lsvrg', 'december-lsvrg', 'december-saga', 'december-saga']
     labels = ['DECEMBER (MNIST)', 'DECEMBER (FMNIST)', 'DECEMBER-LSVRG (MNIST)', 'DECEMBER-LSVRG (FMNIST)', 'DECEMBER-SAGA (MNIST)', 'DECEMBER-SAGA (FMNIST)']
-    colors = ['blue', 'blue', 'red', 'red', 'yellow', 'yellow']
+    colors = ['blue', 'blue', 'red', 'red', 'orange', 'orange']
     markers = ['>', 'o', '>', 'o', '>', 'o']
     
     inner_var_list = []
@@ -47,9 +47,23 @@ def draw(attack):
 
     plt.show()
 
+def operation():
+    with open("experiment-results-FashionMNIST/december-saga-wa-inner-var.pkl", "rb") as f:
+        inner_var = pickle.load(f)
+        l = len(inner_var)
+        inner_var_list = []
+        for i in range(0, l, 2):
+            inner_var_list.append(inner_var[i])
+        # print(inner_var_list)
+        f.close()
+    output = open("experiment-results-FashionMNIST/december-saga-wa-inner-var-2.pkl", "wb")    
+    pickle.dump(inner_var_list, output, protocol=pickle.HIGHEST_PROTOCOL)
+    
+
 
 if __name__ == '__main__':
     draw('wa')
+    # operation()
 
 
 
