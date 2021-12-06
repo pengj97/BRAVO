@@ -36,8 +36,7 @@ class OursWorker(Softmax):
         self.iter = k
 
     def saga(self, image, label) :
-        full_grad = self.cal_batch_grad(image, label)
-        partial_gradient = np.zeros_like(full_grad)
+        partial_gradient = np.zeros_like(self.para)
         if self.iter == 1:
             for i in range(len(label)):
                 X = np.array (image[i: i + 1])
@@ -48,7 +47,7 @@ class OursWorker(Softmax):
                 pro = np.exp (t) / np.sum (np.exp (t), axis=0)
                 partial_g = - np.dot ((Y.T - pro), X) + self.config['decayWeight'] * self.para
                 self.config['gradientTable'][self.id]['%d' % i] = partial_g.copy()
-            self.config['gradientEstimate'][self.id] = full_grad.copy()
+            self.config['gradientEstimate'][self.id] = self.cal_batch_grad(image, label).copy()
         
         else:
             # 计算原始随机梯度
@@ -77,28 +76,8 @@ class OursWorker(Softmax):
 
             # 更新$\bar{g}_i^k$
             self.config['gradientEstimate'][self.id] += dvalue / len (label)
-
-        inner_var = 0
-        for i in range(len(label)):
-            X = np.array (image[i : i + 1])
-            Y = np.array (label[i : i + 1])
-            Y = self.one_hot (Y)
-            t = np.dot (self.para, X.T)
-            t = t - np.max (t, axis=0)
-            pro = np.exp (t) / np.sum (np.exp (t), axis=0)
-            partial_grad = - np.dot ((Y.T - pro), X) + self.config['decayWeight'] * self.para
-
-            # 计算$\nabla f(x_i^k, \xi_i^k) - \nabla(\fi_i^k, \xi_i^k)$的差值
-            if '{}'.format (i) in self.config['gradientTable'][self.id] :
-                dvalue = partial_grad - self.config['gradientTable'][self.id]['%d' % i]
-            else :
-                dvalue = partial_grad
-
-            # 利用SAGA方法得到梯度的估计值
-            partial_grad = dvalue + self.config['gradientEstimate'][self.id]
-            inner_var += np.linalg.norm(partial_grad - full_grad) ** 2 / len(label)
     
-        return inner_var, partial_gradient
+        return partial_gradient
 
     def cal_inner_var_vr(self, image, label):
         inner_var = 0
@@ -136,11 +115,11 @@ class OursWorker(Softmax):
         return aggregate_gradient
 
     def train(self, image, label):
-        inner_var, partial_gradient = self.saga(image, label)
+        partial_gradient = self.saga(image, label)
+        inner_var = self.cal_inner_var_vr(image, label)
         aggregate_gradient = self.aggregate()
         self.para = self.para - self.lr * (aggregate_gradient + partial_gradient)
         return inner_var
-
 
 def ours(setting, attack, dataset, test_acc_flag, exp_lambda):
     """
@@ -217,10 +196,7 @@ def ours(setting, attack, dataset, test_acc_flag, exp_lambda):
                 inner_var_agent = model.train(image_train[id * num_data: (id + 1) * num_data],
                                               label_train[id * num_data: (id + 1) * num_data])
                 workerPara[id] = model.get_para
-                # if id in Config.regular:
-                #     inner_var_agent = model.cal_inner_variation(image_train[id * num_data: (id + 1) * num_data],
-                #                                                 label_train[id * num_data: (id + 1) * num_data])
-                #     inner_var = max(inner_var, inner_var_agent)
+                
             elif setting == 'noniid':
                 if id in Config.regular:
                     inner_var_agent = model.train(image_train[count * num_data : (count + 1) * num_data],
@@ -240,8 +216,8 @@ def ours(setting, attack, dataset, test_acc_flag, exp_lambda):
                 W_regular_norm += np.linalg.norm (workerPara[i] - para_star) ** 2
             para_norm.append (W_regular_norm)
 
-    # output = open ("../../experiment-results-"+dataset+"-2/december-saga" + last_str + "-" + str(conf['learningStep']) + "-inner-var-new.pkl", "wb")
-    # pickle.dump (inner_var_list, output, protocol=pickle.HIGHEST_PROTOCOL)
+    output = open ("../../experiment-results-"+dataset+"-2/december-saga" + last_str + "-" + str(conf['learningStep']) + "-inner-var-new.pkl", "wb")
+    pickle.dump (inner_var_list, output, protocol=pickle.HIGHEST_PROTOCOL)
 
 
 if __name__ == '__main__':

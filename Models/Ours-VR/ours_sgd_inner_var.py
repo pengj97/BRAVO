@@ -135,7 +135,7 @@ def ours(setting, attack, dataset, test_acc_flag, stepsize_experiment_flag):
                 if id in Config.regular:
                     inner_var_agent = model.cal_inner_variation(image_train[id * num_data: (id + 1) * num_data],
                                                                 label_train[id * num_data: (id + 1) * num_data])
-                    inner_var = max(inner_var, inner_var_agent)
+                    inner_var += inner_var_agent / len(Config.regular)
             elif setting == 'noniid':
                 if id in Config.regular:
                     model.train(image_train[count * num_data : (count + 1) * num_data],
@@ -154,7 +154,7 @@ def ours(setting, attack, dataset, test_acc_flag, stepsize_experiment_flag):
                 W_regular_norm += np.linalg.norm (workerPara[i] - para_star) ** 2
             para_norm.append (W_regular_norm)
 
-    output = open ("../../experiment-results-"+dataset+"/december" + last_str + "-inner-var.pkl", "wb")
+    output = open ("../../experiment-results-"+dataset+"-2/december" + last_str + "-inner-var.pkl", "wb")
     pickle.dump (inner_var_list, output, protocol=pickle.HIGHEST_PROTOCOL)
 
 

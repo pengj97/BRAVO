@@ -37,13 +37,10 @@ class OursWorker(Softmax):
         self.iter = k
 
     def lsvrg(self, image, label):
-        full_grad = self.cal_batch_grad(image, label)
-        partial_gradient = np.zeros_like(full_grad)
-        snapshot_fullGrad = np.zeros_like(full_grad)
-        snapshot_para = np.zeros_like(self.para)
+        partial_gradient = np.zeros_like(self.para)
         # 0时刻求全梯度
         if self.iter == 1:
-            snapshot_fullGrad = full_grad
+            snapshot_fullGrad = self.cal_batch_grad(image, label)
             self.config['snapshot_fullGrad'][self.id] = snapshot_fullGrad
 
         else:
@@ -54,7 +51,7 @@ class OursWorker(Softmax):
                 snapshot_fullGrad = self.config['snapshot_fullGrad'][self.id]
             else:
                 snapshot_para = self.para.copy()
-                snapshot_fullGrad = full_grad
+                snapshot_fullGrad = self.cal_batch_grad(image, label)
                 self.config['snapshot_para'][self.id] = snapshot_para
                 self.config['snapshot_fullGrad'][self.id] = snapshot_fullGrad
 
@@ -78,26 +75,7 @@ class OursWorker(Softmax):
                 'decayWeight'] * snapshot_para
             partial_gradient = partial_gradient - partial_gradient_snapshot + snapshot_fullGrad
 
-        inner_var = 0
-        for i in range(len(label)):
-            X = np.array (image[i: i + 1])
-            Y = np.array (label[i: i + 1])
-            Y = self.one_hot (Y)
-            t = np.dot (self.para, X.T)
-            t = t - np.max (t, axis=0)
-            pro = np.exp (t) / np.sum (np.exp (t), axis=0)
-            partial_grad = - np.dot ((Y.T - pro), X) + self.config['decayWeight'] * self.para
-
-            # 计算snapshot的随机梯度
-            t = np.dot (snapshot_para, X.T)
-            t = t - np.max (t, axis=0)
-            pro = np.exp (t) / np.sum (np.exp (t), axis=0)
-            partial_grad_snapshot = - np.dot ((Y.T - pro), X) + self.config[
-                'decayWeight'] * snapshot_para
-            partial_grad = partial_grad - partial_grad_snapshot + snapshot_fullGrad
-            inner_var += np.linalg.norm(partial_grad - full_grad) ** 2 / len(label)
-
-        return inner_var, partial_gradient
+        return partial_gradient
 
     def cal_inner_var_vr(self, image, label):
         inner_var = 0
@@ -136,7 +114,8 @@ class OursWorker(Softmax):
         return aggregate_gradient
 
     def train(self, image, label):
-        inner_var, partial_gradient = self.lsvrg(image, label)
+        partial_gradient = self.lsvrg(image, label)
+        inner_var = self.cal_inner_var_vr(image, label)
         aggregate_gradient = self.aggregate()
         self.para = self.para - self.lr * (aggregate_gradient + partial_gradient)
         return inner_var
@@ -213,18 +192,18 @@ def ours(setting, attack, dataset, test_acc_flag, exp_lambda):
             model = OursWorker(para, id, workerPara_memory, conf, lr, k)
             if setting == 'iid':
                 inner_var_agent = model.train(image_train[id * num_data: (id + 1) * num_data],
-                                        label_train[id * num_data: (id + 1) * num_data])
+                                              label_train[id * num_data: (id + 1) * num_data])
                 workerPara[id] = model.get_para
 
             elif setting == 'noniid':
                 if id in Config.regular:
                     inner_var_agent = model.train(image_train[count * num_data : (count + 1) * num_data],
-                                label_train[count * num_data : (count + 1) * num_data])
+                                                  label_train[count * num_data : (count + 1) * num_data])
                     workerPara[id] = model.get_para
                     count += 1
+
             if id in Config.regular:
                 inner_var += inner_var_agent / len(Config.regular)
-        # inner_var_list.append(inner_var)
 
         # Test
         if test_acc_flag:
@@ -241,4 +220,4 @@ def ours(setting, attack, dataset, test_acc_flag, exp_lambda):
 
 
 if __name__ == '__main__':
-    ours(setting='iid', attack=without_attacks, dataset='FashionMNIST', test_acc_flag=True, exp_lambda=False)
+    ours(setting='iid', attack=without_attacks, dataset='MNIST', test_acc_flag=True, exp_lambda=False)
