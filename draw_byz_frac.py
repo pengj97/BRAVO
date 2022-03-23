@@ -6,7 +6,7 @@ import Config
 
 def draw_byz_frac(attack):
     methods = ['dpsgd', 'december', 'byrdie', 'december-saga', 'bridge', 'december-lsvrg']
-    labels = ['DPSGD', 'DECEMBER', 'ByRDiE-S',  'DECEMBER-SAGA', 'BRIDGE-S', 'DECEMBER-LSVRG']
+    labels = ['DPSGD', 'DRSA', 'ByRDiE-S',  'BRAVO-SAGA', 'BRIDGE-S', 'BRAVO-LSVRG']
     colors = ['black', 'purple', 'skyblue',  'green', 'blue', 'red']
     markers = ['h', '+', 'v',  's', 'x', 'o']
 
@@ -24,13 +24,13 @@ def draw_byz_frac(attack):
                 var_list[i][j] = var[-1]
 
     fig, axes = plt.subplots(1, 2, figsize=(14, 6))
-    axes[0].set_title('MNIST')
+    axes[0].set_title('MNIST', fontsize=15)
     for i in range(len(methods)):
         axes[0].plot(np.array(frac_list) / 100, acc_list[i], color=colors[i], marker=markers[i], label=labels[i])
     axes[0].set_ylabel('Accuracy', fontsize=15)
     axes[0].set_xlabel(r'B / N', fontsize=15)
 
-    axes[1].set_title('MNIST')
+    axes[1].set_title('MNIST', fontsize=15)
     for i in range(len(methods)):
         axes[1].plot(np.array(frac_list) / 100, var_list[i], color=colors[i], marker=markers[i], label=labels[i])
     axes[1].set_ylabel('Model Variance', fontsize=15)

@@ -10,9 +10,9 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 
 config = {
-    'nodeSize': 4,
+    'nodeSize': 3,
     'byzantineSize': 1,
-    'dataSize': 40000,
+    'dataSize': 30,
     
     'iterations': 20000,
     'lr': 0.001,
@@ -20,14 +20,16 @@ config = {
 }
 
 G = nx.complete_graph(config['nodeSize'])
+num_data = config['dataSize'] // config['nodeSize']
 
-data = np.random.normal(0, 1, config['dataSize'])
-
+# data = np.random.normal(0, 1, config['dataSize'])
+data = np.arange(0, config['dataSize'])
 # byzantine = random.sample(range(config['nodeSize']), config['byzantineSize'])
 # regular = list(set(range(config['nodeSize'])).difference(byzantine))
-byzantine = [3]
-regular = [0, 1, 2]
-initial_point = np.random.normal(0, 1, config['nodeSize'])
+byzantine = [2]
+regular = [0, 1]
+# initial_point = np.random.normal(0, 1, config['nodeSize'])
+initial_point = np.zeros(config['nodeSize'])
 
 
 def sign(a):
@@ -135,9 +137,10 @@ def main(attack, batchsize, lr, lamda,  ls):
     config['batchSize'] = batchsize
     config['lr'] = lr
     config['lambda'] = lamda
-    num_data = config['dataSize'] // config['nodeSize']
+    
     regular_data = compute_regular_data(data)
-    # averaged_loss_list = []
+
+    averaged_loss_list = []
     ce_list = []
     distance_list = []
 
@@ -152,7 +155,6 @@ def main(attack, batchsize, lr, lamda,  ls):
     print("Start!")
     for k in tqdm(range(1, config['iterations'] + 1)):
         workerPara_memory = workerPara.copy()
-        lr = config['lr']
         # lr = get_learning(config['lr'], k)
 
         if attack:
@@ -164,37 +166,38 @@ def main(attack, batchsize, lr, lamda,  ls):
             model.train(data[id * num_data:(id + 1) * num_data])
             workerPara[id] = model.get_data
         
-        # averaged_loss = averaged_para_loss(np.mean(workerPara[regular]), regular_data)
+        averaged_loss = averaged_para_loss(np.mean(workerPara[regular]), regular_data)
         ce = consensus_error(workerPara[regular])
         distance = distance_to_optimal_para(workerPara[regular], regular_data)
 
-        # print("The parameters of regular agents:{} ce:{} averaged_loss:{} distance:{}".format(
-        #     workerPara[regular], ce, averaged_loss, distance))
+        print("The parameters of regular agents:{} ce:{} averaged_loss:{} distance:{}".format(
+            workerPara[regular], ce, averaged_loss, distance))
         ce_list.append(ce)
-        # averaged_loss_list.append(averaged_loss)
+        averaged_loss_list.append(averaged_loss)
         distance_list.append(distance)
 
-    label = 'batch size = ' + str(config['batchSize'])
+    # label = 'batch size = ' + str(config['batchSize'])
     
-    plt.figure(3)
-    plt.plot(range(1, config['iterations'] + 1),
-             distance_list,
-             label=label,
-             ls=ls)
-    plt.xticks(fontsize=15)
-    plt.yticks(fontsize=15)
-    plt.ylabel(r'$||x^k - x^*||^2$', fontsize=15)
-    plt.xlabel('Number of iterations', fontsize=15)
-    plt.yscale('log')
-    plt.legend(fontsize=15)
+    # plt.figure(3)
+    # plt.plot(range(1, config['iterations'] + 1),
+    #          distance_list,
+    #          label=label,
+    #          ls=ls)
+    # plt.xticks(fontsize=15)
+    # plt.yticks(fontsize=15)
+    # plt.ylabel(r'$||x^k - x^*||^2$', fontsize=15)
+    # plt.xlabel('Number of iterations', fontsize=15)
+    # plt.yscale('log')
+    # plt.legend(fontsize=15)
     # plt.savefig('ToyExample_distance.pdf', bbox_inches='tight')
 
 
 if __name__ == '__main__':
-    batchsize_list = [1, 100, 10000]
-    lr_list = [0.0008, 0.0008, 0.0008]
-    lamda_list = [0.005, 0.005, 0.005]
+    batchsize_list = [1]
+    lr_list = [0.0008]
+    lamda_list = [0.1]
     ls_list = [':',  '-.', '--']
-    for batchsize, lr, lamda, marker, ls in zip(batchsize_list, lr_list, lamda_list,ls_list):
+    print(data)
+    for batchsize, lr, lamda, ls in zip(batchsize_list, lr_list, lamda_list,ls_list):
         main(attack=gaussian_attack, batchsize=batchsize, lr=lr, lamda=lamda,  ls=ls)
-    plt.show()
+    # plt.show()

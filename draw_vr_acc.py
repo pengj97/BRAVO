@@ -181,14 +181,14 @@ def draw_imopp_2(attack):
             var_list.append(var)
 
     fig, axes = plt.subplots(2, 2, figsize=(14, 10))
-    axes[0, 0].set_title('DECEMBER-SAGA')
+    axes[0, 0].set_title('BRAVO-SAGA', fontsize=15)
     for i in range(len(values)):
         axes[0, 0].plot(set_iteration_interval, acc_list[i], color=colors[i], marker=markers[i], label=r"$\lambda = $"+str(values[i]))
     axes[0, 0].set_ylabel('Accuracy', fontsize=15)
     axes[0, 0].set_xlabel('Number of iterations', fontsize=15)
     axes[0, 0].tick_params(labelsize=15)
     
-    axes[0, 1].set_title('DECEMBER-LSVRG')
+    axes[0, 1].set_title('BRAVO-LSVRG', fontsize=15)
     for i in range(len(values)):
         l = i + len(values)
         axes[0, 1].plot(set_iteration_interval, acc_list[l], color=colors[i], marker=markers[i], label=r"$\lambda = $"+str(values[i]))
@@ -196,7 +196,7 @@ def draw_imopp_2(attack):
     axes[0, 1].set_xlabel('Number of iterations', fontsize=15)
     axes[0, 1].tick_params(labelsize=15)
 
-    axes[1, 0].set_title('DECEMBER-SAGA')
+    axes[1, 0].set_title('BRAVO-SAGA', fontsize=15)
     for i in range(len(values)):
         axes[1, 0].plot(set_iteration_interval, var_list[i], color=colors[i], marker=markers[i], label=r"$\lambda = $"+str(values[i]))
     axes[1, 0].set_ylabel('Model Variance', fontsize=15)
@@ -204,7 +204,7 @@ def draw_imopp_2(attack):
     axes[1, 0].set_yscale('log')
     axes[1, 0].tick_params(labelsize=15)
     
-    axes[1, 1].set_title('DECEMBER-LSVRG')
+    axes[1, 1].set_title('BRAVO-LSVRG', fontsize=15)
     for i in range(len(values)):
         l = i + len(values)
         axes[1, 1].plot(set_iteration_interval, var_list[l], color=colors[i], marker=markers[i], label=r"$\lambda = $"+str(values[i]))
@@ -217,7 +217,7 @@ def draw_imopp_2(attack):
     fig.legend(handles, labels, loc='lower center', ncol=3, fontsize=15)
 
     plt.subplots_adjust(top=0.91, bottom=0.11, left=0.125, right=0.9, hspace=0.255, wspace=0.2)
-    plt.savefig('pdf/imopp-var.pdf', bbox_inches='tight')
+    plt.savefig('pdf/imopp.pdf', bbox_inches='tight')
 
     plt.show()
 
@@ -234,7 +234,7 @@ def draw(attack):
     """
     set_iteration = np.arange(1, Config.optConfig['iterations'] + 1)
     methods = ['dpsgd', 'december', 'byrdie', 'december-saga', 'bridge', 'december-lsvrg']
-    labels = ['DPSGD', 'DECEMBER', 'ByRDiE-S',  'DECEMBER-SAGA', 'BRIDGE-S', 'DECEMBER-LSVRG']
+    labels = ['DPSGD', 'DRSA', 'ByRDiE-S',  'BRAVO-SAGA', 'BRIDGE-S', 'BRAVO-LSVRG']
 
     acc_list = []
     var_list = []
@@ -252,34 +252,37 @@ def draw(attack):
 
 
     fig, axes = plt.subplots(2, 2, figsize=(14, 10))
-    axes[0, 0].set_title('MNIST')
+    axes[0, 0].set_title('MNIST', fontsize=15)
     for j, i in enumerate(range(0, len(acc_list), 2)):
         axes[0, 0].plot(set_iteration_interval, acc_list[i], color=colors[j], marker=markers[j], label=labels[j])
-
+    # axes[0, 0].set_xscale('log')
     axes[0, 0].set_ylabel('Accuracy', fontsize=15)
     axes[0, 0].set_xlabel('Number of iterations', fontsize=15)
     axes[0, 0].tick_params(labelsize=15)
 
-    axes[0, 1].set_title('Fashion-MNIST')
+    axes[0, 1].set_title('Fashion-MNIST', fontsize=15)
     # axes[0, 1].plot(set_iteration_interval, acc_list[1], color=colors[0], marker=markers[0], label=labels[0])
     for j, i in enumerate(range(1, len(acc_list) + 1, 2)):
         axes[0, 1].plot(set_iteration, acc_list[i], color=colors[j], marker=markers[j], label=labels[j], markevery=200)
+    # axes[0, 1].set_xscale('log')
     axes[0, 1].set_ylabel('Accuracy', fontsize=15)
     axes[0, 1].set_xlabel('Number of iterations', fontsize=15)
     axes[0, 1].tick_params(labelsize=15)
     
-    axes[1, 0].set_title('MNIST')
+    axes[1, 0].set_title('MNIST', fontsize=15)
     for j, i in enumerate(range(0, len(acc_list), 2)):
         axes[1, 0].plot(set_iteration_interval, var_list[i], color=colors[j], marker=markers[j], label=labels[j])
+    # axes[1, 0].set_xscale('log')
     axes[1, 0].set_ylabel('Model Variance', fontsize=15)
     axes[1, 0].set_xlabel('Number of iterations', fontsize=15)
     axes[1, 0].set_yscale('log')
     axes[1, 0].tick_params(labelsize=15)
 
-    axes[1, 1].set_title('Fashion-MNIST')
+    axes[1, 1].set_title('Fashion-MNIST', fontsize=15)
     # axes[1, 1].plot(set_iteration_interval, var_list[1], color=colors[0], marker=markers[0], label=labels[0])
     for j, i in enumerate(range(1, len(acc_list) + 1, 2)):
         axes[1, 1].plot(set_iteration, var_list[i], color=colors[j], marker=markers[j], label=labels[j], markevery=200)
+    # axes[1, 1].set_xscale('log')
     axes[1, 1].set_ylabel('Model Variance', fontsize=15)
     axes[1, 1].set_xlabel('Number of iterations', fontsize=15)
     axes[1, 1].set_yscale('log')
@@ -305,7 +308,7 @@ def draw_ga_sf(attack):
     """
     set_iteration = np.arange(1, Config.optConfig['iterations'] + 1)
     methods = ['dpsgd', 'december', 'byrdie', 'december-saga', 'bridge', 'december-lsvrg']
-    labels = ['DPSGD', 'DECEMBER', 'ByRDiE-S',  'DECEMBER-SAGA', 'BRIDGE-S', 'DECEMBER-LSVRG']
+    labels = ['DPSGD', 'DRSA', 'ByRDiE-S',  'BRAVO-SAGA', 'BRIDGE-S', 'BRAVO-LSVRG']
 
     acc_list = []
     var_list = []
@@ -323,7 +326,7 @@ def draw_ga_sf(attack):
 
 
     fig, axes = plt.subplots(2, 2, figsize=(14, 10))
-    axes[0, 0].set_title('MNIST')
+    axes[0, 0].set_title('MNIST', fontsize=15)
     for j, i in enumerate(range(0, len(acc_list), 2)):
         axes[0, 0].plot(set_iteration_interval, acc_list[i], color=colors[j], marker=markers[j], label=labels[j])
 
@@ -331,7 +334,7 @@ def draw_ga_sf(attack):
     axes[0, 0].set_xlabel('Number of iterations', fontsize=15)
     axes[0, 0].tick_params(labelsize=15)
 
-    axes[0, 1].set_title('Fashion-MNIST')
+    axes[0, 1].set_title('Fashion-MNIST', fontsize=15)
     axes[0, 1].plot(set_iteration_interval, acc_list[1], color=colors[0], marker=markers[0], label=labels[0])
     for j, i in enumerate(range(3, len(acc_list) + 1, 2)):
         axes[0, 1].plot(set_iteration, acc_list[i], color=colors[j+1], marker=markers[j+1], label=labels[j+1], markevery=200)
@@ -339,7 +342,7 @@ def draw_ga_sf(attack):
     axes[0, 1].set_xlabel('Number of iterations', fontsize=15)
     axes[0, 1].tick_params(labelsize=15)
     
-    axes[1, 0].set_title('MNIST')
+    axes[1, 0].set_title('MNIST', fontsize=15)
     for j, i in enumerate(range(0, len(acc_list), 2)):
         axes[1, 0].plot(set_iteration_interval, var_list[i], color=colors[j], marker=markers[j], label=labels[j])
     axes[1, 0].set_ylabel('Model Variance', fontsize=15)
@@ -347,7 +350,7 @@ def draw_ga_sf(attack):
     axes[1, 0].set_yscale('log')
     axes[1, 0].tick_params(labelsize=15)
 
-    axes[1, 1].set_title('Fashion-MNIST')
+    axes[1, 1].set_title('Fashion-MNIST', fontsize=15)
     axes[1, 1].plot(set_iteration_interval, var_list[1], color=colors[0], marker=markers[0], label=labels[0])
     for j, i in enumerate(range(3, len(acc_list) + 1, 2)):
         axes[1, 1].plot(set_iteration, var_list[i], color=colors[j+1], marker=markers[j+1], label=labels[j+1], markevery=200)
@@ -368,9 +371,11 @@ if __name__ == '__main__':
     # draw_mnist('sd')
     # draw_imopp(attack='sd', method='saga')
     # draw_fashionmnist('sf')
-    draw('sd')
+    # draw('wa')
+    # draw('sd')
     # draw_ga_sf('ga')
-    # draw_imopp_2('sd')
+    # draw_ga_sf('sf')
+    draw_imopp_2('sd')
 
 
 

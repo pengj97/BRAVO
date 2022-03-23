@@ -16,9 +16,9 @@ def draw(attack):
     """
 
     methods = ['december', 'december', 'december-saga', 'december-saga', 'december-lsvrg', 'december-lsvrg']
-    labels = ['DECEMBER', 'DECEMBER', 'DECEMBER-SAGA', 'DECEMBER-SAGA', 'DECEMBER-LSVRG', 'DECEMBER-LSVRG']
-    colors = ['blue', 'blue', 'orange', 'orange', 'red', 'red']
-    markers = ['o', 'o', 'o', 'o', 'o', 'o']
+    labels = ['DRSA', 'DRSA', 'BRAVO-SAGA', 'BRAVO-SAGA', 'BRAVO-LSVRG', 'BRAVO-LSVRG']
+    colors = ['purple', 'purple', 'green', 'green', 'red', 'red']
+    markers = ['+', '+', 's', 's', 'o', 'o']
 
     
     inner_var_list = []
@@ -37,16 +37,18 @@ def draw(attack):
     set_iteration = list(range(1, 1 + l))
 
     fig, axes = plt.subplots(1, 2, sharex=True, sharey=True, figsize=(14, 6))
-    axes[0].set_title('MNIST')
+    axes[0].set_title('MNIST', fontsize=15)
     for i in range(0, len(methods), 2):
         axes[0].plot(set_iteration, inner_var_list[i], color=colors[i], marker=markers[i], label=labels[i], markevery=200)
+    # axes[0].set_xscale('log')
     axes[0].set_ylabel('Gradient Variance', fontsize=15)
     axes[0].set_xlabel('Number of iterations', fontsize=15)
     axes[0].tick_params(labelsize=15)
 
-    axes[1].set_title('Fashion-MNIST')
+    axes[1].set_title('Fashion-MNIST', fontsize=15)
     for i in range(1, len(methods) + 1, 2):
         axes[1].plot(set_iteration, inner_var_list[i], color=colors[i], marker=markers[i], label=labels[i], markevery=200)
+    # axes[1].set_xscale('log')
     axes[1].set_xlabel('Number of iterations', fontsize=15)
     axes[1].tick_params(labelsize=15)
 
