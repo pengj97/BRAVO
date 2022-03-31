@@ -49,7 +49,7 @@ optConfig = {
     'nodeSize': 100,
     'byzantineSize': 20,
 
-    'iterations': 30000,
+    'iterations': 5000,
     'decayWeight': 0.01,
 
     'batchSize':1,
@@ -102,11 +102,11 @@ DrsaConfig['penaltyPara'] = 0.02
 
 DrsaSAGAConfig = optConfig.copy()
 DrsaSAGAConfig['learningStep'] = 0.01
-DrsaSAGAConfig['penaltyPara'] = 0.02
+DrsaSAGAConfig['penaltyPara'] = 0.005
 
 DrsaLSVRGConfig = optConfig.copy()
 DrsaLSVRGConfig['learningStep'] = 0.01
-DrsaLSVRGConfig['penaltyPara'] = 0.02
+DrsaLSVRGConfig['penaltyPara'] = 0.005
 
 
 DrsaGdConfig = optConfig.copy()

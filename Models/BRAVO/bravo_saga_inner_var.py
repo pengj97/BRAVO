@@ -62,7 +62,7 @@ class OursWorker(Softmax):
             pro = np.exp (t) / np.sum (np.exp (t), axis=0)
             partial_gradient = - np.dot ((Y.T - pro), X) / batchsize + self.config['decayWeight'] * self.para
 
-            # 计算$\nabla f(x_i^k, \xi_i^k) - \nabla f(\fi_i^k, \xi_i^k)$的差值
+            # 计算$F'_{w, i_w^k}(x_i^k) - F'_{w, i_w^k} (\phi_{w, i_w^k}^k)$
             if '{}'.format (select) in self.config['gradientTable'][self.id] :
                 dvalue = partial_gradient - self.config['gradientTable'][self.id]['%d' % select]
             else :
@@ -80,6 +80,11 @@ class OursWorker(Softmax):
         return partial_gradient
 
     def cal_inner_var_vr(self, image, label):
+        """
+        Calculate the inner variace of saga:
+        E_j || F'_{w, j}(x) - F'_w(x) ||^2  == inner_var
+
+        """
         inner_var = 0
         full_grad = self.cal_batch_grad(image, label)
         for i in range(len(label)):
@@ -91,7 +96,7 @@ class OursWorker(Softmax):
             pro = np.exp (t) / np.sum (np.exp (t), axis=0)
             partial_grad = - np.dot ((Y.T - pro), X) + self.config['decayWeight'] * self.para
 
-            # 计算$\nabla f(x_i^k, \xi_i^k) - \nabla(\fi_i^k, \xi_i^k)$的差值
+            # 计算$F'_{w, i_w^k}(x_i^k) - F'_{w, i_w^k} (\phi_{w, i_w^k}^k)$
             if '{}'.format (i) in self.config['gradientTable'][self.id] :
                 dvalue = partial_grad - self.config['gradientTable'][self.id]['%d' % i]
             else :
@@ -221,4 +226,4 @@ def ours(setting, attack, dataset, test_acc_flag, exp_lambda):
 
 
 if __name__ == '__main__':
-    ours(setting='iid', attack=without_attacks, dataset='MNIST', test_acc_flag=True, exp_lambda=False)
+    ours(setting='iid', attack=without_attacks, dataset='FashionMNIST', test_acc_flag=True, exp_lambda=False)

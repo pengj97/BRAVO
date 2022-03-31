@@ -220,4 +220,4 @@ def ours(setting, attack, dataset, test_acc_flag, exp_lambda):
 
 
 if __name__ == '__main__':
-    ours(setting='iid', attack=without_attacks, dataset='MNIST', test_acc_flag=True, exp_lambda=False)
+    ours(setting='iid', attack=without_attacks, dataset='FashionMNIST', test_acc_flag=True, exp_lambda=False)
