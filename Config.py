@@ -83,18 +83,18 @@ BRIDGEConfig['learningStep'] = 0.1     # without attack
 # BRIDGEConfig['learningStep'] = 0.6       # sign-flipping attack
 # BRIDGEConfig['learningStep'] = 0.1       # Non-iid setting
 
-# OursConfig = optConfig.copy()
-# OursConfig['learningStep'] = 0.3
-# OursConfig['penaltyPara'] = 0.005         # without attack
+# DrsaConfig = optConfig.copy()
+# DrsaConfig['learningStep'] = 0.3
+# DrsaConfig['penaltyPara'] = 0.005         # without attack
 
-# OursConfig['learningStep'] = 0.28
-# OursConfig['penaltyPara'] = 0.01        # same-value attack
+# DrsaConfig['learningStep'] = 0.28
+# DrsaConfig['penaltyPara'] = 0.01        # same-value attack
 
-# OursConfig['learningStep'] = 0.5
-# OursConfig['penaltyPara'] = 0.0022        # sign-flipping attack
+# DrsaConfig['learningStep'] = 0.5
+# DrsaConfig['penaltyPara'] = 0.0022        # sign-flipping attack
 
-# OursConfig['learningStep'] = 0.4
-# OursConfig['penaltyPara'] = 0.02          # Non-iid setting
+# DrsaConfig['learningStep'] = 0.4
+# DrsaConfig['penaltyPara'] = 0.02          # Non-iid setting
 
 DrsaConfig = optConfig.copy()
 DrsaConfig['learningStep'] = 0.01
@@ -102,7 +102,7 @@ DrsaConfig['penaltyPara'] = 0.02
 
 DrsaSAGAConfig = optConfig.copy()
 DrsaSAGAConfig['learningStep'] = 0.01
-DrsaSAGAConfig['penaltyPara'] = 0.005
+DrsaSAGAConfig['penaltyPara'] = 0.02
 
 DrsaLSVRGConfig = optConfig.copy()
 DrsaLSVRGConfig['learningStep'] = 0.01

@@ -37,47 +37,56 @@ class OursWorker(Softmax):
         self.iter = k
 
     def lsvrg(self, image, label):
-        partial_gradient = np.zeros_like(self.para)
-        # 0时刻求全梯度
+        # cal full grad in time 1
         if self.iter == 1:
             snapshot_fullGrad = self.cal_batch_grad(image, label)
             self.config['snapshot_fullGrad'][self.id] = snapshot_fullGrad
+            return snapshot_fullGrad
 
+        # cal full grad with prob 1/J
+        pro = np.random.rand()
+        if pro >= 1 / len(label):
+            snapshot_para = self.config['snapshot_para'][self.id]
+            snapshot_fullGrad = self.config['snapshot_fullGrad'][self.id]
         else:
-            # 依概率1/n取全梯度
-            pro = np.random.rand()
-            if pro >= 1 / len(label):
-                snapshot_para = self.config['snapshot_para'][self.id]
-                snapshot_fullGrad = self.config['snapshot_fullGrad'][self.id]
-            else:
-                snapshot_para = self.para.copy()
-                snapshot_fullGrad = self.cal_batch_grad(image, label)
-                self.config['snapshot_para'][self.id] = snapshot_para
-                self.config['snapshot_fullGrad'][self.id] = snapshot_fullGrad
+            snapshot_para = self.para.copy()
+            snapshot_fullGrad = self.cal_batch_grad(image, label)
+            self.config['snapshot_para'][self.id] = snapshot_para
+            self.config['snapshot_fullGrad'][self.id] = snapshot_fullGrad
 
-            # 计算随机梯度
-            select = np.random.randint (len(label))
-            # batchsize = self.config['batchSize']
-            batchsize = 1
-            X = np.array (image[select : select + batchsize])
-            Y = np.array (label[select : select + batchsize])
-            Y = self.one_hot (Y)
-            t = np.dot (self.para, X.T)
-            t = t - np.max (t, axis=0)
-            pro = np.exp (t) / np.sum (np.exp (t), axis=0)
-            partial_gradient = - np.dot ((Y.T - pro), X) / batchsize + self.config['decayWeight'] * self.para
+        # cal stochastic grad
+        select = np.random.randint (len(label))
+        batchsize = self.config['batchSize']
+        X = np.array (image[select : select + batchsize])
+        Y = np.array (label[select : select + batchsize])
+        Y = self.one_hot (Y)
+        t = np.dot (self.para, X.T)
+        t = t - np.max (t, axis=0)
+        pro = np.exp (t) / np.sum (np.exp (t), axis=0)
+        partial_gradient = - np.dot ((Y.T - pro), X) / batchsize + self.config['decayWeight'] * self.para
 
-            # 计算snapshot的随机梯度
-            t = np.dot (snapshot_para, X.T)
-            t = t - np.max (t, axis=0)
-            pro = np.exp (t) / np.sum (np.exp (t), axis=0)
-            partial_gradient_snapshot = - np.dot ((Y.T - pro), X) / batchsize + self.config[
-                'decayWeight'] * snapshot_para
-            partial_gradient = partial_gradient - partial_gradient_snapshot + snapshot_fullGrad
+        # cal stochastic grad of snapshot
+        t = np.dot (snapshot_para, X.T)
+        t = t - np.max (t, axis=0)
+        pro = np.exp (t) / np.sum (np.exp (t), axis=0)
+        partial_gradient_snapshot = - np.dot ((Y.T - pro), X) / batchsize + self.config[
+            'decayWeight'] * snapshot_para
 
-        return partial_gradient
+        return partial_gradient - partial_gradient_snapshot + snapshot_fullGrad
 
     def cal_inner_var_vr(self, image, label):
+        """
+        Calculate the inner variace of lsvrg:
+        E_j || F'_{w, j}(x) - F'_w(x) ||^2  == inner_var
+
+        """
+        def cal_sto_grad(para, X, Y):
+            t = np.dot(para, X.T)
+            t = t - np.max(t, axis=0)
+            pro = np.exp(t) / np.sum(np.exp(t), axis=0)
+            sto_grad = - np.dot((Y.T - pro), X) + self.config['decayWeight'] * para
+            return sto_grad
+
         inner_var = 0
         full_grad = self.cal_batch_grad(image, label)
         snapshot_para = self.config['snapshot_para'][self.id]
@@ -86,17 +95,13 @@ class OursWorker(Softmax):
             X = np.array (image[i: i + 1])
             Y = np.array (label[i: i + 1])
             Y = self.one_hot (Y)
-            t = np.dot (self.para, X.T)
-            t = t - np.max (t, axis=0)
-            pro = np.exp (t) / np.sum (np.exp (t), axis=0)
-            partial_grad = - np.dot ((Y.T - pro), X) + self.config['decayWeight'] * self.para
 
-            # 计算snapshot的随机梯度
-            t = np.dot (snapshot_para, X.T)
-            t = t - np.max (t, axis=0)
-            pro = np.exp (t) / np.sum (np.exp (t), axis=0)
-            partial_grad_snapshot = - np.dot ((Y.T - pro), X) + self.config[
-                'decayWeight'] * snapshot_para
+            # cal sto grad of self.para
+            partial_grad = cal_sto_grad(self.para, X, Y)
+
+            # cal sto grad of snapshot
+            partial_grad_snapshot = cal_sto_grad(snapshot_para, X, Y)
+
             partial_grad = partial_grad - partial_grad_snapshot + snapshot_fullGrad
             inner_var += np.linalg.norm(partial_grad - full_grad) ** 2 / len(label)
         return inner_var
@@ -135,9 +140,6 @@ def ours(setting, attack, dataset, test_acc_flag, exp_lambda):
     conf = Config.DrsaLSVRGConfig.copy()
     num_data = int(Config.mnistConfig['trainNum'] / conf['nodeSize'])
 
-    loss_list = []
-    acc_list = []
-    var_list = []
     inner_var_list = []
     para_norm = []
 

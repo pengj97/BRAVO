@@ -2,7 +2,6 @@ import os
 import sys
 os.chdir(sys.path[0])
 sys.path.append("../../")
-import time
 import numpy as np
 import pickle
 import random
@@ -57,7 +56,7 @@ class OursWorker(Softmax):
         self.para = self.para - self.lr * (aggregate_gradient + partial_gradient)
 
 
-def ours(setting, attack, dataset, test_acc_flag, stepsize_experiment_flag, record_time):
+def ours(setting, attack, dataset, test_acc_flag, stepsize_experiment_flag):
     """
     Run our proposed method in iid and non-iid settings under Byzantine attacks
 
@@ -72,11 +71,8 @@ def ours(setting, attack, dataset, test_acc_flag, stepsize_experiment_flag, reco
     conf = Config.DrsaConfig.copy()
     num_data = int(Config.mnistConfig['trainNum'] / conf['nodeSize'])
 
-    loss_list = []
-    acc_list = []
-    var_list = []
+    inner_var_list = []
     para_norm = []
-    time_list = []
 
     # Get the training data
     image_train, label_train = getData('../../' + dataset + '/train-images.idx3-ubyte',
@@ -110,7 +106,6 @@ def ours(setting, attack, dataset, test_acc_flag, stepsize_experiment_flag, reco
     select = random.choice(Config.regular)
 
     logger.info("Start!")
-    start_time = time.time()
     for k in tqdm(range(1, max_iteration + 1)):
         count = 0
         workerPara_memory = workerPara.copy()
@@ -127,6 +122,8 @@ def ours(setting, attack, dataset, test_acc_flag, stepsize_experiment_flag, reco
         # Byzantine attacks
         workerPara_memory, last_str = attack(workerPara_memory)
 
+        inner_var = 0
+
         # x_i^{k+1} = x_i^k - lr * g_i^k
         for id in range(conf['nodeSize']):
             para = workerPara[id]
@@ -135,6 +132,10 @@ def ours(setting, attack, dataset, test_acc_flag, stepsize_experiment_flag, reco
                 model.train(image_train[id * num_data: (id + 1) * num_data],
                             label_train[id * num_data: (id + 1) * num_data])
                 workerPara[id] = model.get_para
+                if id in Config.regular:
+                    inner_var_agent = model.cal_inner_variation(image_train[id * num_data: (id + 1) * num_data],
+                                                                label_train[id * num_data: (id + 1) * num_data])
+                    inner_var += inner_var_agent / len(Config.regular)
             elif setting == 'noniid':
                 if id in Config.regular:
                     model.train(image_train[count * num_data : (count + 1) * num_data],
@@ -144,47 +145,18 @@ def ours(setting, attack, dataset, test_acc_flag, stepsize_experiment_flag, reco
 
         # Testing
         if test_acc_flag :
-            if record_time:
-                acc = get_accuracy (workerPara[select], image_test, label_test)
-                acc_list.append (acc)
-                this_time = time.time()
-                sum_time = this_time - start_time
-                time_list.append(sum_time)
-                logger.info ('the {}th iteration  time:{} test_acc:{}'.format (k, sum_time, acc))
-            else:
-                acc = get_accuracy (workerPara[select], image_test, label_test)
-                acc_list.append (acc)
-                var = get_vars (Config.regular, workerPara)
-                var_list.append (var)
-                logger.info ('the {}th iteration  test_acc:{} variance:{}'.format (k, acc, var))
+            inner_var_list.append(inner_var)
+            logger.info ('the {}th iteration inner_var:{}'.format (k, inner_var))
 
         else :
             W_regular_norm = 0
             for i in Config.regular :
                 W_regular_norm += np.linalg.norm (workerPara[i] - para_star) ** 2
             para_norm.append (W_regular_norm)
-            # logger.info ('the {}th iteration para_norm: {}'.format (k, W_regular_norm))
 
-    # Save the experiment results
-    if test_acc_flag :
-        if record_time: 
-            output = open ("../../experiment-results-"+dataset+"/december" + last_str + "-" + str(conf['byzantineSize']) + "-time.pkl", "wb")
-            pickle.dump ((time_list, acc_list), output, protocol=pickle.HIGHEST_PROTOCOL)
-        else:
-            output = open ("../../experiment-results-"+dataset+"/december" + last_str + "-" + str(conf['byzantineSize']) + ".pkl", "wb")
-            pickle.dump ((acc_list, var_list), output, protocol=pickle.HIGHEST_PROTOCOL)
-    else :
-        if stepsize_experiment_flag == 0:
-            output = open ("../../experiment-results-"+dataset+"-2/december-sqrt" + last_str + "-" + setting + "-para.pkl", "wb")
-            pickle.dump (para_norm, output, protocol=pickle.HIGHEST_PROTOCOL)
-        elif stepsize_experiment_flag == 1:
-            output = open ("../../experiment-results-"+dataset+"-2/december" + last_str + "-" + setting + "-para.pkl", "wb")
-            pickle.dump (para_norm, output, protocol=pickle.HIGHEST_PROTOCOL)
-        elif stepsize_experiment_flag == 2:
-            output = open ("../../experiment-results-"+dataset+"-2/december-constant" + last_str + "-" + setting + "-para.pkl", "wb")
-            pickle.dump (para_norm, output, protocol=pickle.HIGHEST_PROTOCOL)
+    output = open ("../../experiment-results-"+dataset+"-2/december" + last_str + "-inner-var.pkl", "wb")
+    pickle.dump (inner_var_list, output, protocol=pickle.HIGHEST_PROTOCOL)
 
 
 if __name__ == '__main__':
-    ours(setting='iid', attack=without_attacks, dataset='MNIST', \
-        test_acc_flag=True, stepsize_experiment_flag=0, record_time=True)
+    ours(setting='iid', attack=without_attacks, dataset='MNIST', test_acc_flag=True, stepsize_experiment_flag=0)

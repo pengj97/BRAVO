@@ -37,12 +37,13 @@ class OursWorker(Softmax):
         self.iter = k
 
     def lsvrg(self, image, label):
-        # 0时刻求全梯度
+        # cal full grad in time 1
         if self.iter == 1:
             snapshot_fullGrad = self.cal_batch_grad(image, label)
             self.config['snapshot_fullGrad'][self.id] = snapshot_fullGrad
+            return snapshot_fullGrad
 
-        # 依概率1/n取全梯度
+        # cal full grad with prob 1/J
         pro = np.random.rand()
         if pro >= 1 / len(label):
             snapshot_para = self.config['snapshot_para'][self.id]
@@ -53,7 +54,7 @@ class OursWorker(Softmax):
             self.config['snapshot_para'][self.id] = snapshot_para
             self.config['snapshot_fullGrad'][self.id] = snapshot_fullGrad
 
-        # 计算随机梯度
+        # cal stochastic grad
         select = np.random.randint (len(label))
         batchsize = self.config['batchSize']
         X = np.array (image[select : select + batchsize])
@@ -64,7 +65,7 @@ class OursWorker(Softmax):
         pro = np.exp (t) / np.sum (np.exp (t), axis=0)
         partial_gradient = - np.dot ((Y.T - pro), X) / batchsize + self.config['decayWeight'] * self.para
 
-        # 计算snapshot的随机梯度
+        # cal stochastic grad of snapshot
         t = np.dot (snapshot_para, X.T)
         t = t - np.max (t, axis=0)
         pro = np.exp (t) / np.sum (np.exp (t), axis=0)
@@ -106,7 +107,6 @@ def ours(setting, attack, dataset, test_acc_flag, exp_lambda):
     conf = Config.DrsaLSVRGConfig.copy()
     num_data = int(Config.mnistConfig['trainNum'] / conf['nodeSize'])
 
-    loss_list = []
     acc_list = []
     var_list = []
     para_norm = []
@@ -198,4 +198,4 @@ def ours(setting, attack, dataset, test_acc_flag, exp_lambda):
 
 
 if __name__ == '__main__':
-    ours(setting='noniid', attack=sample_duplicating_attacks, dataset='MNIST', test_acc_flag=False, exp_lambda=False)
+    ours(setting='noniid', attack=sample_duplicating_attacks, dataset='MNIST', test_acc_flag=True, exp_lambda=False)

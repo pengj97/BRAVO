@@ -4,9 +4,8 @@ import random
 from LoadMnist import getData, data_redistribute
 import Config
 from MainModel import Softmax, get_accuracy, get_vars, get_learning
-from Attacks import same_value_attack, sign_flipping_attacks, sample_duplicating_attack
+from Attacks import without_attacks, alie_attacks, same_value_attacks, sign_flipping_attacks, sample_duplicating_attacks
 import logging.config
-
 
 logging.config.fileConfig(fname='..\\..\\Log\\loginit.ini', disable_existing_loggers=False)
 logger = logging.getLogger("infoLogger")
@@ -49,7 +48,7 @@ class OursWorker(Softmax):
         :param label: scalar
         :return:
         """
-        partical_gradient = self.cal_minibatch_sto_grad(image, label)  # saga
+        partical_gradient = self.cal_minibatch_sto_grad(image, label)
         aggregate_gradient = self.aggregate()
 
         self.para = self.para - self.lr * (partical_gradient + aggregate_gradient)
@@ -88,11 +87,11 @@ def ours(setting, attack, flag_time_varying):
     print(Config.regular)
 
     # Load the configurations
-    conf = Config.DrsaConfig.copy()
+    conf = Config.OursConfig.copy()
     num_data = int(Config.mnistConfig['trainNum'] / conf['nodeSize'])
 
-    loss_list = []
-    para_list = []
+    classification_accuracy = []
+    variances = []
 
     # Get the training data
     image_train, label_train = getData('../../MNIST/train-images.idx3-ubyte',
@@ -102,10 +101,12 @@ def ours(setting, attack, flag_time_varying):
     if setting == 'noniid':
         image_train, label_train = data_redistribute(image_train, label_train)
 
+    # Get the testing data
+    image_test, label_test = getData('../../MNIST/t10k-images.idx3-ubyte',
+                                     '../../MNIST/t10k-labels.idx1-ubyte')
+
     # Parameter initialization
     workerPara = np.zeros((conf['nodeSize'], 10, 784))
-    conf['gradientTable'] = [{} for _ in range(conf['nodeSize'])]
-    conf['gradientEstimate'] = np.zeros((conf['nodeSize'], 10, 784))
 
     # Start training
     k = 0
@@ -118,12 +119,11 @@ def ours(setting, attack, flag_time_varying):
         k += 1
         count = 0
         workerPara_memory = workerPara.copy()
-        # lr = conf['learningStep']  # constant learning step
-        lr = get_learning(conf['learningStep'], k)
+        lr = get_learning(conf['learningStep'], k) # compute decreasing learning rate
 
         # generate time-varying graph
         if flag_time_varying:
-            graph_memory = Config.G.copy()
+            graph_memory = Config.G.copy ( )
             Config.G = gragh_timevarying(graph_memory, pe=0.01)  # 生成时变图
 
         # Byzantine attacks
@@ -132,8 +132,6 @@ def ours(setting, attack, flag_time_varying):
 
         # Regular workers receive models from their neighbors
         # and update their local models
-        loss = 0
-        para_regular = np.zeros_like(workerPara[0])
         for id in range(conf['nodeSize']):
             para = workerPara[id]
             model = OursWorker(para, id, workerPara_memory, conf, lr)
@@ -148,18 +146,21 @@ def ours(setting, attack, flag_time_varying):
                     workerPara[id] = model.get_para
                     count += 1
 
-            if id == select:
-                loss = model.cal_loss(image_train, label_train)
-                loss_list.append(loss)
-                para_list.append(para)
-
         # Testing
-        logger.info ('the {}th iteration  loss:{}'.format(k, loss))
+        if k % 200 == 0 or k == 1:
+            acc = get_accuracy(workerPara[select], image_test, label_test)
+            classification_accuracy.append(acc)
+            var = get_vars(Config.regular, workerPara)
+            variances.append(var)
+            logger.info('the {}th iteration acc: {}, vars: {}'.format(k, acc, var))
+
+    print(classification_accuracy)
+    print(variances)
 
     # Save the experiment results
-    output = open("../../experiment-results/drsa-base-"+last_str+".pkl", "wb")
-    pickle.dump((para_list, loss_list), output, protocol=pickle.HIGHEST_PROTOCOL)
+    output = open("../../experiment-results/ours"+last_str+".pkl", "wb")
+    pickle.dump((classification_accuracy, variances), output, protocol=pickle.HIGHEST_PROTOCOL)
 
 
 if __name__ == '__main__':
-    ours(setting='iid', attack=None, flag_time_varying=False)
+    ours(setting='iid', attack=without_attacks, flag_time_varying=False)

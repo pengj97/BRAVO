@@ -36,7 +36,7 @@ class OursWorker(Softmax):
         self.iter = k
 
     def saga(self, image, label) :
-        partial_gradient = np.zeros_like(self.para)
+        # initiate the gradient table and cal full grad at time 1
         if self.iter == 1:
             for i in range(len(label)):
                 X = np.array (image[i: i + 1])
@@ -47,35 +47,36 @@ class OursWorker(Softmax):
                 pro = np.exp (t) / np.sum (np.exp (t), axis=0)
                 partial_g = - np.dot ((Y.T - pro), X) + self.config['decayWeight'] * self.para
                 self.config['gradientTable'][self.id]['%d' % i] = partial_g.copy()
-            self.config['gradientEstimate'][self.id] = self.cal_batch_grad(image, label).copy()
+            full_grad = self.cal_batch_grad(image, label)
+            self.config['gradientEstimate'][self.id] = full_grad.copy()
+            return full_grad
         
-        else:
-            # 计算原始随机梯度
-            select = np.random.randint (len (label))
-            # batchsize = self.config['batchSize']
-            batchsize = 1
-            X = np.array (image[select : select + batchsize])
-            Y = np.array (label[select : select + batchsize])
-            Y = self.one_hot (Y)
-            t = np.dot (self.para, X.T)
-            t = t - np.max (t, axis=0)
-            pro = np.exp (t) / np.sum (np.exp (t), axis=0)
-            partial_gradient = - np.dot ((Y.T - pro), X) / batchsize + self.config['decayWeight'] * self.para
+        # cal stochastic grad
+        select = np.random.randint (len (label))
+        # batchsize = self.config['batchSize']
+        batchsize = 1
+        X = np.array (image[select : select + batchsize])
+        Y = np.array (label[select : select + batchsize])
+        Y = self.one_hot (Y)
+        t = np.dot (self.para, X.T)
+        t = t - np.max (t, axis=0)
+        pro = np.exp (t) / np.sum (np.exp (t), axis=0)
+        partial_gradient = - np.dot ((Y.T - pro), X) / batchsize + self.config['decayWeight'] * self.para
 
-            # 计算$F'_{w, i_w^k}(x_i^k) - F'_{w, i_w^k} (\phi_{w, i_w^k}^k)$
-            if '{}'.format (select) in self.config['gradientTable'][self.id] :
-                dvalue = partial_gradient - self.config['gradientTable'][self.id]['%d' % select]
-            else :
-                dvalue = partial_gradient
+        # F'_{w, i_w^k}(x_i^k) - F'_{w, i_w^k} (phi_{w, i_w^k}^k)
+        if '{}'.format (select) in self.config['gradientTable'][self.id] :
+            dvalue = partial_gradient - self.config['gradientTable'][self.id]['%d' % select]
+        else :
+            dvalue = partial_gradient
 
-            # 更新梯度表
-            self.config['gradientTable'][self.id]['{}'.format (select)] = partial_gradient.copy()
+        # Update the gradient table
+        self.config['gradientTable'][self.id]['{}'.format (select)] = partial_gradient.copy()
 
-            # 利用SAGA方法得到梯度的估计值
-            partial_gradient = dvalue + self.config['gradientEstimate'][self.id]
+        # cal g_w^k using SAGA
+        partial_gradient = dvalue + self.config['gradientEstimate'][self.id]
 
-            # 更新$\bar{g}_i^k$
-            self.config['gradientEstimate'][self.id] += dvalue / len (label)
+        # update the mean of the stochastic gradient in the gradient table
+        self.config['gradientEstimate'][self.id] += dvalue / len (label)
     
         return partial_gradient
 
@@ -96,13 +97,13 @@ class OursWorker(Softmax):
             pro = np.exp (t) / np.sum (np.exp (t), axis=0)
             partial_grad = - np.dot ((Y.T - pro), X) + self.config['decayWeight'] * self.para
 
-            # 计算$F'_{w, i_w^k}(x_i^k) - F'_{w, i_w^k} (\phi_{w, i_w^k}^k)$
+            # F'_{w, i_w^k}(x_i^k) - F'_{w, i_w^k} (phi_{w, i_w^k}^k)
             if '{}'.format (i) in self.config['gradientTable'][self.id] :
                 dvalue = partial_grad - self.config['gradientTable'][self.id]['%d' % i]
             else :
                 dvalue = partial_grad
 
-            # 利用SAGA方法得到梯度的估计值
+            # update g_w^k using SAGA
             partial_grad = dvalue + self.config['gradientEstimate'][self.id]
             inner_var += np.linalg.norm(partial_grad - full_grad) ** 2 / len(label)
         return inner_var
@@ -141,9 +142,6 @@ def ours(setting, attack, dataset, test_acc_flag, exp_lambda):
     conf = Config.DrsaSAGAConfig.copy()
     num_data = int(Config.mnistConfig['trainNum'] / conf['nodeSize'])
 
-    loss_list = []
-    acc_list = []
-    var_list = []
     inner_var_list = []
     para_norm = []
 
@@ -193,7 +191,7 @@ def ours(setting, attack, dataset, test_acc_flag, exp_lambda):
 
         inner_var = 0
 
-        # x_i^{k+1} = x_i^k - lr * g_i^k
+        # x_w^{k+1} = x_w^k - lr * g_w^k
         for id in range(conf['nodeSize']):
             para = workerPara[id]
             model = OursWorker(para, id, workerPara_memory, conf, lr, k)

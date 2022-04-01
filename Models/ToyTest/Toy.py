@@ -195,6 +195,6 @@ if __name__ == '__main__':
     lr_list = [0.0008, 0.0008, 0.0008]
     lamda_list = [0.005, 0.005, 0.005]
     ls_list = [':',  '-.', '--']
-    for batchsize, lr, lamda, marker, ls in zip(batchsize_list, lr_list, lamda_list,ls_list):
-        main(attack=gaussian_attack, batchsize=batchsize, lr=lr, lamda=lamda,  ls=ls)
+    for batchsize, lr, lamda, ls in zip(batchsize_list, lr_list, lamda_list,ls_list):
+        main(attack=gaussian_attack, batchsize=batchsize, lr=lr, lamda=lamda, ls=ls)
     plt.show()

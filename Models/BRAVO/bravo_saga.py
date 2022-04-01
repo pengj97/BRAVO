@@ -19,7 +19,7 @@ logger = logging.getLogger("infoLogger")
 
 class OursWorker(Softmax):
 
-    def __init__(self, para, id, workerPara, config, lr):
+    def __init__(self, para, id, workerPara, config, lr, k):
         """
         Initialize the solver for regular workers
 
@@ -33,9 +33,25 @@ class OursWorker(Softmax):
         self.id = id
         self.workerPara = workerPara
         self.lr = lr
+        self.iter = k
 
     def saga(self, image, label) :
-        # 计算原始随机梯度
+        # initiate the gradient table and cal full grad at time 1
+        if self.iter == 1:
+            for i in range(len(label)):
+                X = np.array (image[i: i + 1])
+                Y = np.array (label[i: i + 1])
+                Y = self.one_hot (Y)
+                t = np.dot (self.para, X.T)
+                t = t - np.max (t, axis=0)
+                pro = np.exp (t) / np.sum (np.exp (t), axis=0)
+                partial_g = - np.dot ((Y.T - pro), X) + self.config['decayWeight'] * self.para
+                self.config['gradientTable'][self.id]['%d' % i] = partial_g.copy()
+            full_grad = self.cal_batch_grad(image, label)
+            self.config['gradientEstimate'][self.id] = full_grad.copy()
+            return full_grad
+        
+        # cal stochastic grad
         select = np.random.randint (len (label))
         batchsize = self.config['batchSize']
         X = np.array (image[select : select + batchsize])
@@ -46,19 +62,19 @@ class OursWorker(Softmax):
         pro = np.exp (t) / np.sum (np.exp (t), axis=0)
         partial_gradient = - np.dot ((Y.T - pro), X) / batchsize + self.config['decayWeight'] * self.para
 
-        # 计算$\nabla f(x_i^k, \xi_i^k) - \nabla(\fi_i^k, \xi_i^k)$的差值
+        # F'_{w, i_w^k}(x_i^k) - F'_{w, i_w^k} (phi_{w, i_w^k}^k)
         if '{}'.format (select) in self.config['gradientTable'][self.id] :
             dvalue = partial_gradient - self.config['gradientTable'][self.id]['%d' % select]
         else :
             dvalue = partial_gradient
 
-        # 更新梯度表
-        self.config['gradientTable'][self.id]['{}'.format (select)] = partial_gradient
+        # Update the gradient table
+        self.config['gradientTable'][self.id]['{}'.format (select)] = partial_gradient.copy()
 
-        # 利用SAGA方法得到梯度的估计值
+        # cal g_w^k using SAGA
         partial_gradient = dvalue + self.config['gradientEstimate'][self.id]
 
-        # 更新$\bar{g}_i^k$
+        # update the mean of the stochastic gradient in the gradient table
         self.config['gradientEstimate'][self.id] += dvalue / len (label)
     
         return partial_gradient
@@ -148,7 +164,7 @@ def ours(setting, attack, dataset, test_acc_flag, exp_lambda):
         # x_i^{k+1} = x_i^k - lr * g_i^k
         for id in range(conf['nodeSize']):
             para = workerPara[id]
-            model = OursWorker(para, id, workerPara_memory, conf, lr)
+            model = OursWorker(para, id, workerPara_memory, conf, lr, k)
             if setting == 'iid':
                 model.train(image_train[id * num_data: (id + 1) * num_data],
                             label_train[id * num_data: (id + 1) * num_data])
@@ -161,7 +177,7 @@ def ours(setting, attack, dataset, test_acc_flag, exp_lambda):
                     count += 1
 
         if test_acc_flag :
-            if k % 200 == 0 or k == 1 :
+            # if k % 200 == 0 or k == 1 :
                 acc = get_accuracy (workerPara[select], image_test, label_test)
                 acc_list.append (acc)
                 var = get_vars (Config.regular, workerPara)
@@ -189,4 +205,4 @@ def ours(setting, attack, dataset, test_acc_flag, exp_lambda):
 
 
 if __name__ == '__main__':
-    ours(setting='noniid', attack=sample_duplicating_attacks, dataset='MNIST', test_acc_flag=True, exp_lambda=True)
+    ours(setting='noniid', attack=sample_duplicating_attacks, dataset='MNIST', test_acc_flag=True, exp_lambda=False)
