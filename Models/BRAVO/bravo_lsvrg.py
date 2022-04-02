@@ -120,16 +120,10 @@ def ours(setting, attack, dataset, test_acc_flag, exp_lambda):
                                       '../../' + dataset + '/t10k-labels.idx1-ubyte')
 
     # Get the optimal solution
-    if dataset == 'MNIST':
-        if not test_acc_flag :
-            with open ("../../optimal-para/optimal-para-"+str(conf['penaltyPara'])+"-"+str(conf['byzantineSize'])+".pkl", 'rb') as f:
-                para_star = pickle.load (f)
-                print (para_star)
-    elif dataset == 'FashionMNIST':
-        if not test_acc_flag :
-            with open ("../../experiment-results/" + dataset + "-optimal-para-"+str(conf['penaltyPara'])+"-"+str(conf['byzantineSize'])+".pkl", 'rb') as f:
-                para_star = pickle.load (f)
-                print (para_star)
+    if not test_acc_flag :
+        with open ("../../optimal-para/" + dataset + "-optimal-para-"+str(conf['penaltyPara'])+"-"+str(conf['byzantineSize'])+".pkl", 'rb') as f:
+            para_star = pickle.load (f)
+            print (para_star)
 
     # Rearrange the training data to simulate the non-i.i.d. case
     if setting == 'noniid':

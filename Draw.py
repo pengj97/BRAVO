@@ -96,8 +96,8 @@ def draw_imopp():
 if __name__ == '__main__':
     # draw('wa')
     # draw('sv')
-    # draw('sf')
-    draw('noniid')
+    draw('sf')
+    # draw('noniid')
     # draw_imopp()
 
 

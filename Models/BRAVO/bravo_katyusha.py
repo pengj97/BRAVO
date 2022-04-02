@@ -184,7 +184,7 @@ def ours(setting, attack, flag_time_varying):
         logger.info ('the {}th iteration  loss:{}'.format(k, loss))
 
     # Save the experiment results
-    output = open("../../experiment-results/drsa-katyusha"+last_str+".pkl", "wb")
+    output = open("../../experiment-results-MNIST/bravo-katyusha"+last_str+".pkl", "wb")
     pickle.dump((workerPara, loss_list), output, protocol=pickle.HIGHEST_PROTOCOL)
 
 

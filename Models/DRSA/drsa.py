@@ -54,27 +54,7 @@ class OursWorker(Softmax):
         self.para = self.para - self.lr * (partical_gradient + aggregate_gradient)
 
 
-def gragh_timevarying(G, pe):
-    """
-    Generate the time-varing graph
-
-    :param G: the topology graph
-    :param pe: the probability of nodes connecting
-    """
-    tvG = G.copy()
-    remove_edges = []
-    all_edges = []
-    for edge in tvG.edges():
-        all_edges.append(edge)
-        pro = np.random.rand()
-        if pro >= pe:
-            remove_edges.append(edge)
-    # print(remove_edges)
-    tvG.remove_edges_from(remove_edges)
-    return tvG
-
-
-def ours(setting, attack, flag_time_varying):
+def ours(setting, attack, dataset, test_acc_flag):
     """
     Run our proposed method in iid and non-iid settings under Byzantine attacks
 
@@ -92,6 +72,7 @@ def ours(setting, attack, flag_time_varying):
 
     classification_accuracy = []
     variances = []
+    para_norm = []
 
     # Get the training data
     image_train, label_train = getData('../../MNIST/train-images.idx3-ubyte',
@@ -104,6 +85,12 @@ def ours(setting, attack, flag_time_varying):
     # Get the testing data
     image_test, label_test = getData('../../MNIST/t10k-images.idx3-ubyte',
                                      '../../MNIST/t10k-labels.idx1-ubyte')
+    
+    # Get the optimal solution
+    if not test_acc_flag :
+        with open ("../../optimal-para/" + dataset + "-optimal-para-"+str(conf['penaltyPara'])+"-"+str(conf['byzantineSize'])+".pkl", 'rb') as f:
+            para_star = pickle.load (f)
+            print (para_star)
 
     # Parameter initialization
     workerPara = np.zeros((conf['nodeSize'], 10, 784))
@@ -120,11 +107,6 @@ def ours(setting, attack, flag_time_varying):
         count = 0
         workerPara_memory = workerPara.copy()
         lr = get_learning(conf['learningStep'], k) # compute decreasing learning rate
-
-        # generate time-varying graph
-        if flag_time_varying:
-            graph_memory = Config.G.copy ( )
-            Config.G = gragh_timevarying(graph_memory, pe=0.01)  # 生成时变图
 
         # Byzantine attacks
         if attack != None:
@@ -147,13 +129,18 @@ def ours(setting, attack, flag_time_varying):
                     count += 1
 
         # Testing
-        if k % 200 == 0 or k == 1:
-            acc = get_accuracy(workerPara[select], image_test, label_test)
-            classification_accuracy.append(acc)
-            var = get_vars(Config.regular, workerPara)
-            variances.append(var)
-            logger.info('the {}th iteration acc: {}, vars: {}'.format(k, acc, var))
-
+        if test_acc_flag:
+            if k % 200 == 0 or k == 1:
+                acc = get_accuracy(workerPara[select], image_test, label_test)
+                classification_accuracy.append(acc)
+                var = get_vars(Config.regular, workerPara)
+                variances.append(var)
+                logger.info('the {}th iteration acc: {}, vars: {}'.format(k, acc, var))
+        else :
+            W_regular_norm = 0
+            for i in Config.regular :
+                W_regular_norm += np.linalg.norm (workerPara[i] - para_star) ** 2
+            para_norm.append (W_regular_norm)
     print(classification_accuracy)
     print(variances)
 
@@ -163,4 +150,4 @@ def ours(setting, attack, flag_time_varying):
 
 
 if __name__ == '__main__':
-    ours(setting='iid', attack=without_attacks, flag_time_varying=False)
+    ours(setting='iid', attack=without_attacks, dataset='MNIST', test_acc_flag=True)

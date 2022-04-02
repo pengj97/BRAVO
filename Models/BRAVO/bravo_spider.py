@@ -189,7 +189,7 @@ def ours(setting, attack, flag_time_varying) :
         logger.info ('the {}th iteration  loss:{}'.format (k, loss))
 
     # Save the experiment results
-    output = open ("../../experiment-results/drsa-spider"+last_str+".pkl", "wb")
+    output = open ("../../experiment-results-MNIST/bravo-spider"+last_str+".pkl", "wb")
     pickle.dump ((para_list, loss_list), output, protocol=pickle.HIGHEST_PROTOCOL)
 
 
