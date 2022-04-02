@@ -228,8 +228,6 @@ def draw(attack):
 
     :param attack:
                    'wa': without Byzantine attacks,
-                   'sv': same-value attacks
-                   'sf': sign-flipping attacks
                    'sd': sample-duplicating attacks in non-i.i.d. case
     """
     set_iteration = np.arange(1, Config.optConfig['iterations'] + 1)
@@ -301,10 +299,8 @@ def draw_ga_sf(attack):
     Draw the curve of experimental results
 
     :param attack:
-                   'wa': without Byzantine attacks,
-                   'sv': same-value attacks
+                   'ga': Gaussian attacks,
                    'sf': sign-flipping attacks
-                   'sd': sample-duplicating attacks in non-i.i.d. case
     """
     set_iteration = np.arange(1, Config.optConfig['iterations'] + 1)
     methods = ['dpsgd', 'december', 'byrdie', 'december-saga', 'bridge', 'december-lsvrg']
@@ -373,9 +369,9 @@ if __name__ == '__main__':
     # draw_fashionmnist('sf')
     # draw('wa')
     # draw('sd')
-    # draw_ga_sf('ga')
+    draw_ga_sf('ga')
     # draw_ga_sf('sf')
-    draw_imopp_2('sd')
+    # draw_imopp_2('sd')
 
 
 

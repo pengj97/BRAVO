@@ -158,7 +158,7 @@ def ours(setting, attack, flag_time_varying):
     print(variances)
 
     # Save the experiment results
-    output = open("../../experiment-results/ours"+last_str+".pkl", "wb")
+    output = open("../../experiment-results/december"+last_str+".pkl", "wb")
     pickle.dump((classification_accuracy, variances), output, protocol=pickle.HIGHEST_PROTOCOL)
 
 

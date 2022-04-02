@@ -200,7 +200,7 @@ def ours(setting, attack, dataset, test_acc_flag, exp_lambda):
             output = open ("../../experiment-results-"+dataset+"/december-saga" + last_str + "-" + str(conf['byzantineSize']) + ".pkl", "wb")
             pickle.dump ((acc_list, var_list), output, protocol=pickle.HIGHEST_PROTOCOL)
     else :
-        output = open ("../../experiment-results-"+ dataset +"-2/december-saga" + last_str + "-" + setting + "-para.pkl", "wb")
+        output = open ("../../experiment-results-"+ dataset +"/december-saga" + last_str + "-" + setting + "-para.pkl", "wb")
         pickle.dump (para_norm, output, protocol=pickle.HIGHEST_PROTOCOL)
 
 
