@@ -1,10 +1,14 @@
+import os 
+import sys
+os.chdir(sys.path[0])
+sys.path.append('../../')
 import numpy as np
 import pickle
 import random
 from LoadMnist import getData, data_redistribute
 import Config
 from MainModel import Softmax, get_accuracy, get_vars, get_learning
-from Attacks import without_attacks, alie_attacks, same_value_attacks, sign_flipping_attacks, sample_duplicating_attacks
+from Attacks import gaussian_attacks, without_attacks, alie_attacks, same_value_attacks, sign_flipping_attacks, sample_duplicating_attacks
 import logging.config
 
 logging.config.fileConfig(fname='..\\..\\Log\\loginit.ini', disable_existing_loggers=False)
@@ -67,7 +71,7 @@ def ours(setting, attack, dataset, test_acc_flag):
     print(Config.regular)
 
     # Load the configurations
-    conf = Config.OursConfig.copy()
+    conf = Config.DrsaConfig.copy()
     num_data = int(Config.mnistConfig['trainNum'] / conf['nodeSize'])
 
     classification_accuracy = []
@@ -150,4 +154,4 @@ def ours(setting, attack, dataset, test_acc_flag):
 
 
 if __name__ == '__main__':
-    ours(setting='iid', attack=without_attacks, dataset='MNIST', test_acc_flag=True)
+    ours(setting='iid', attack=alie_attacks, dataset='MNIST', test_acc_flag=True)
