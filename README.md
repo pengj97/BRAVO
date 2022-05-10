@@ -6,4 +6,4 @@
 * networkx 2.6.3
 
 ## Methods
-* Stored in ·Models/(method)/(method).py·
+* See `Models/(method)/(method).py`
