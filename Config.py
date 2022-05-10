@@ -5,28 +5,58 @@ import matplotlib.pyplot as plt
 random.seed(1)
 
 
-def gen_graph(nodeSize, byzantine):
-    """
-    Randomly generate a graph where the regular workers are connected.
+# def gen_graph(nodeSize, byzantine):
+#     """
+#     Randomly generate a graph where the regular workers are connected.
 
-    :param nodeSize: the number of workers
-    :param byzantine: the set of Byzantine workers
+#     :param nodeSize: the number of workers
+#     :param byzantine: the set of Byzantine workers
+#     """
+#     while True:
+#         G = nx.fast_gnp_random_graph(nodeSize, 0.5, seed=1)
+#         H = G.copy()
+#         for i in byzantine:
+#             H.remove_node(i)
+#         num_connected = 0
+#         for _ in nx.connected_components(H):
+#             num_connected += 1
+#         if num_connected == 1:
+#             # nx.draw(G)
+#             # plt.show()
+#             break
+#     return G
+#     # G = nx.complete_graph(nodeSize)
+#     # return G
+
+
+def gen_twocastle_graph(k, byzantine):
     """
-    while True:
-        G = nx.fast_gnp_random_graph(nodeSize, 0.5, seed=1)
-        H = G.copy()
-        for i in byzantine:
-            H.remove_node(i)
-        num_connected = 0
-        for _ in nx.connected_components(H):
-            num_connected += 1
-        if num_connected == 1:
-            # nx.draw(G)
-            # plt.show()
-            break
-    return G
-    # G = nx.complete_graph(nodeSize)
-    # return G
+    There are 2k nodes in the network totally
+    """
+    assert k >= 3, 'k must be greater than or equal 3'
+    assert len(byzantine) <= k - 2, 'Byzantine_size must be less than or equal to k - 2'
+
+    nodesize = 2 * k
+    graph = nx.Graph()
+    graph.add_nodes_from(range(nodesize))
+
+    # inner edges
+    for castle in range(2):
+        edge_list = [(i, j) for i in range(k*castle, k*castle+k) for j in range(i+1, k*castle+k)]
+        graph.add_edges_from(edge_list)
+
+    # outer edges
+    edge_list = [(i, j) for i in range(k) for j in range(k, 2*k) if i + k != j]
+    graph.add_edges_from(edge_list)
+
+    # nx.draw(graph)
+    # plt.show()
+
+    return graph
+
+
+# def gen_line_graph(nodesize):
+
 
 
 def metropolis_weight(G):
@@ -46,10 +76,10 @@ def metropolis_weight(G):
 
 
 optConfig = {
-    'nodeSize': 100,
-    'byzantineSize': 20,
+    'nodeSize': 12,
+    'byzantineSize': 1,
 
-    'iterations': 5000,
+    'iterations': 30000,
     'decayWeight': 0.01,
 
     'batchSize':32,
@@ -98,7 +128,7 @@ BRIDGEConfig['learningStep'] = 0.1     # without attack
 
 DrsaConfig = optConfig.copy()
 DrsaConfig['learningStep'] = 0.01
-DrsaConfig['penaltyPara'] = 0.02  
+DrsaConfig['penaltyPara'] = 0.5
 
 DrsaSAGAConfig = optConfig.copy()
 DrsaSAGAConfig['learningStep'] = 0.005
@@ -131,7 +161,8 @@ byzantine = random.sample(range(optConfig['nodeSize']), optConfig['byzantineSize
 regular = list(set(range(optConfig['nodeSize'])).difference(byzantine))  # 正常节点的集合
 
 # generate topology graph
-G = gen_graph(optConfig['nodeSize'], byzantine)
+# G = gen_graph(optConfig['nodeSize'], byzantine)
+G = gen_twocastle_graph(optConfig['nodeSize'] // 2, byzantine)
 
 # generate weight matrix according to metropolis weight
 weight_matrix = metropolis_weight(G)

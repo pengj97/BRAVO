@@ -27,15 +27,15 @@ def gaussian_attacks(workerPara):
 
 
 def alie_attacks(workerPara):
-    byzantine_para_set = []
+    regular_para_set = []
+    for id in regular:
+        regular_para_set.append(workerPara[id].copy())
+    regular_para_set = np.array(regular_para_set)
+    mean = np.mean(regular_para_set, axis=0)
+    var = np.var(regular_para_set, axis=0)
+    z_max = 2.0
     for id in byzantine:
-        byzantine_para_set.append(workerPara[id].copy())
-    byzantine_para_set = np.array(byzantine_para_set)
-    mean = np.mean(byzantine_para_set, axis=0)
-    var = np.var(byzantine_para_set, axis=0)
-    z_max = 1.75
-    for id in byzantine:
-        workerPara[id] = mean - z_max * var
+        workerPara[id] = mean + z_max * var
     return workerPara, '-al'
 
 
@@ -49,3 +49,10 @@ def sample_duplicating_attacks(workerPara):
     for id in byzantine:
         workerPara[id] = workerPara[regular[0]]
     return workerPara, '-sd'
+
+
+def zero_sum_attacks(workerpara):
+    mu = np.mean(workerpara[regular], axis=0)
+    for id in byzantine:
+        workerpara[id] = -1 * mu
+    return workerpara, '-zs'

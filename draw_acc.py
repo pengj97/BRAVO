@@ -293,6 +293,58 @@ def draw(attack):
     plt.savefig('pdf/' + attack + '.pdf', bbox_inches='tight')
     plt.show()
 
+def draw_without_var(attack):
+    """
+    Draw the curve of experimental results
+
+    :param attack:
+                   'wa': without Byzantine attacks,
+                   'sd': sample-duplicating attacks in non-i.i.d. case
+    """
+    set_iteration = np.arange(1, Config.optConfig['iterations'] + 1)
+    methods = ['dpsgd', 'december', 'byrdie', 'december-saga', 'bridge', 'december-lsvrg']
+    labels = ['DPSGD', 'DRSA', 'ByRDiE-S',  'BRAVO-SAGA', 'BRIDGE-S', 'BRAVO-LSVRG']
+
+    acc_list = []
+    var_list = []
+
+    for i in range(len(methods)):
+        with open("experiment-results-MNIST/" + methods[i] + "-" + attack + ".pkl", "rb") as f:
+            acc, var = pickle.load(f)
+            acc_list.append(acc)
+            var_list.append(var)
+        
+        with open("experiment-results-FashionMNIST/" + methods[i] + "-" + attack + ".pkl", "rb") as f:
+            acc, var = pickle.load(f)
+            acc_list.append(acc)
+            var_list.append(var)
+
+
+    fig, axes = plt.subplots(1, 2, figsize=(14, 6))
+    axes[0].set_title('MNIST', fontsize=15)
+    for j, i in enumerate(range(0, len(acc_list), 2)):
+        axes[0].plot(set_iteration_interval, acc_list[i], color=colors[j], marker=markers[j], label=labels[j])
+    axes[0].set_ylabel('Accuracy', fontsize=15)
+    axes[0].set_xlabel('Number of iterations', fontsize=15)
+    axes[0].tick_params(labelsize=15)
+
+    axes[1].set_title('Fashion-MNIST', fontsize=15)
+    # axes[1].plot(set_iteration_interval, acc_list[1], color=colors[0], marker=markers[0], label=labels[0])
+    for j, i in enumerate(range(1, len(acc_list) + 1, 2)):
+        axes[1].plot(set_iteration, acc_list[i], color=colors[j], marker=markers[j], label=labels[j], markevery=200)
+    # axes[1].set_xscale('log')
+    axes[1].set_ylabel('Accuracy', fontsize=15)
+    axes[1].set_xlabel('Number of iterations', fontsize=15)
+    axes[1].tick_params(labelsize=15)
+
+    handles, labels = axes[1].get_legend_handles_labels()
+    fig.legend(handles, labels, loc='lower center', ncol=3, fontsize=15)
+
+    plt.subplots_adjust(top=0.905, bottom=0.23, left=0.13, right=0.9, hspace=0.2, wspace=0.2)
+    plt.savefig('pdf/' + attack + '_without_var.pdf', bbox_inches='tight')
+    plt.show()
+
+
 
 def draw_ga_sf(attack):
     """
@@ -362,6 +414,58 @@ def draw_ga_sf(attack):
     plt.savefig('pdf/' + attack + '.pdf', bbox_inches='tight')
     plt.show()
 
+def draw_ga_sf_2(attack):
+    """
+    Draw the curve of experimental results
+
+    :param attack:
+                   'ga': Gaussian attacks,
+                   'sf': sign-flipping attacks
+    """
+    set_iteration = np.arange(1, Config.optConfig['iterations'] + 1)
+    methods = ['dpsgd', 'december', 'byrdie', 'december-saga', 'bridge', 'december-lsvrg']
+    labels = ['DPSGD', 'DRSA', 'ByRDiE-S',  'BRAVO-SAGA', 'BRIDGE-S', 'BRAVO-LSVRG']
+
+    acc_list = []
+    var_list = []
+
+    for i in range(len(methods)):
+        with open("experiment-results-MNIST/" + methods[i] + "-" + attack + ".pkl", "rb") as f:
+            acc, var = pickle.load(f)
+            acc_list.append(acc)
+            var_list.append(var)
+        
+        with open("experiment-results-FashionMNIST/" + methods[i] + "-" + attack + ".pkl", "rb") as f:
+            acc, var = pickle.load(f)
+            acc_list.append(acc)
+            var_list.append(var)
+
+
+    fig, axes = plt.subplots(1, 2, figsize=(14, 6))
+    axes[0].set_title('MNIST', fontsize=15)
+    for j, i in enumerate(range(0, len(acc_list), 2)):
+        axes[0].plot(set_iteration_interval, acc_list[i], color=colors[j], marker=markers[j], label=labels[j])
+
+    axes[0].set_ylabel('Accuracy', fontsize=15)
+    axes[0].set_xlabel('Number of iterations', fontsize=15)
+    axes[0].tick_params(labelsize=15)
+
+    axes[1].set_title('Fashion-MNIST', fontsize=15)
+    axes[1].plot(set_iteration_interval, acc_list[1], color=colors[0], marker=markers[0], label=labels[0])
+    for j, i in enumerate(range(3, len(acc_list) + 1, 2)):
+        axes[1].plot(set_iteration, acc_list[i], color=colors[j+1], marker=markers[j+1], label=labels[j+1], markevery=200)
+    axes[1].set_ylabel('Accuracy', fontsize=15)
+    axes[1].set_xlabel('Number of iterations', fontsize=15)
+    axes[1].tick_params(labelsize=15)
+
+    handles, labels = axes[1].get_legend_handles_labels()
+    fig.legend(handles, labels, loc='lower center', ncol=3, fontsize=15)
+
+    plt.subplots_adjust(top=0.905, bottom=0.23, left=0.13, right=0.9, hspace=0.2, wspace=0.2)
+    plt.savefig('pdf/' + attack + '-2.pdf', bbox_inches='tight')
+    plt.show()
+
+
 
 if __name__ == '__main__':
     # draw_mnist('sd')
@@ -369,8 +473,10 @@ if __name__ == '__main__':
     # draw_fashionmnist('sf')
     # draw('wa')
     # draw('sd')
-    draw_ga_sf('ga')
+    # draw_without_var('sd')
+    # draw_ga_sf('ga')
     # draw_ga_sf('sf')
+    draw_ga_sf_2('sf')
     # draw_imopp_2('sd')
 
 

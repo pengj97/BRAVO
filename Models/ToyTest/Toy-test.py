@@ -14,7 +14,7 @@ config = {
     'byzantineSize': 1,
     'dataSize': 40000,
     
-    'iterations': 50000,
+    'iterations': 20000,
     'lr': 0.001,
     'lambda': 1
 }
@@ -27,9 +27,7 @@ data = np.random.normal(0, 1, config['dataSize'])
 # regular = list(set(range(config['nodeSize'])).difference(byzantine))
 byzantine = [3]
 regular = [0, 1, 2]
-# initial_point = np.random.normal(0, 1, config['nodeSize'])
-point = np.random.normal(0, 1)
-initial_point = point * np.ones(config['nodeSize'])
+initial_point = np.random.normal(0, 1, config['nodeSize'])
 
 
 def sign(a):
@@ -133,7 +131,7 @@ def get_learning(alpha, k):
     return alpha / math.sqrt(k)
 
 
-def main(attack, batchsize, lr, lamda,  ls):
+def main(attack, batchsize, lr, lamda,  ls, de_lr_flag):
     config['batchSize'] = batchsize
     config['lr'] = lr
     config['lambda'] = lamda
@@ -154,8 +152,9 @@ def main(attack, batchsize, lr, lamda,  ls):
     print("Start!")
     for k in tqdm(range(1, config['iterations'] + 1)):
         workerPara_memory = workerPara.copy()
-        lr = config['lr']
-        # lr = get_learning(config['lr'], k)
+        # lr = config['lr']
+        if de_lr_flag:
+            lr = get_learning(config['lr'], k)
 
         if attack:
             workerPara_memory = attack(workerPara_memory)
@@ -175,8 +174,10 @@ def main(attack, batchsize, lr, lamda,  ls):
         ce_list.append(ce)
         # averaged_loss_list.append(averaged_loss)
         distance_list.append(distance)
-
-    label = 'batch size = ' + str(config['batchSize'])
+    if de_lr_flag:
+        label = 'batch size = ' + str(config['batchSize']) + '(de_lr)'
+    else:
+        label = 'batch size = ' + str(config['batchSize'])
     
     plt.figure(3)
     plt.plot(range(1, config['iterations'] + 1),
@@ -193,10 +194,11 @@ def main(attack, batchsize, lr, lamda,  ls):
 
 
 if __name__ == '__main__':
-    batchsize_list = [1, 100, 10000]
-    lr_list = [0.0003, 0.0003, 0.0003]
-    lamda_list = [0.005, 0.005, 0.005]
-    ls_list = [':',  '-.', '--']
-    for batchsize, lr, lamda, ls in zip(batchsize_list, lr_list, lamda_list,ls_list):
-        main(attack=gaussian_attack, batchsize=batchsize, lr=lr, lamda=lamda, ls=ls)
+    batchsize_list = [100, 1, 100, 10000]
+    lr_list = [0.08, 0.0008, 0.0008, 0.0008]
+    lamda_list = [0.005, 0.005, 0.005, 0.005]
+    ls_list = ['-', ':',  '-.', '--']
+    de_lr_flag_list = [True, False, False, False]
+    for batchsize, lr, lamda, ls, de_lr_flag in zip(batchsize_list, lr_list, lamda_list,ls_list, de_lr_flag_list):
+        main(attack=gaussian_attack, batchsize=batchsize, lr=lr, lamda=lamda, ls=ls, de_lr_flag=de_lr_flag)
     plt.show()

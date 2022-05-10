@@ -213,9 +213,9 @@ def draw_vr_distance_4():
     # Plot
     fig, axes = plt.subplots(1, 2, figsize=(14, 6))
 
-    axes[0].set_title('MNIST (Sample-duplicating Attacks)', fontsize=15)
+    axes[0].set_title('MNIST (Sign-Flipping Attacks)', fontsize=15)
     for i in range(len(methods)):
-        axes[0].plot(set_iteration, para_norm_lists_3[i], label=labels[i],
+        axes[0].plot(set_iteration, para_norm_lists_1[i], label=labels[i],
                         color=colors[i], marker=markers[i], markevery=2000)
     axes[0].set_yscale('log')
     axes[0].set_ylabel(r'$||x^k - x^*||^2$', fontsize=15)
@@ -232,13 +232,12 @@ def draw_vr_distance_4():
     handles, labels = axes[1].get_legend_handles_labels()
     fig.legend(handles, labels, fontsize=15, loc='lower center', ncol=3)
 
-    plt.subplots_adjust(top=0.92, bottom=0.24, left=0.12, right=0.925, hspace=0.25, wspace=0.25)
-    plt.savefig('pdf/optimality-gap-3.pdf',  bbox_inches='tight')
+    plt.subplots_adjust(top=0.915, bottom=0.24, left=0.13, right=0.9, hspace=0.2, wspace=0.2)
+    plt.savefig('pdf/optimality-gap-2.pdf',  bbox_inches='tight')
     plt.show()    
 
 
 if __name__ == '__main__':
     # draw_vr_distance(setting='noniid', attack='sd', dataset='MNIST')
     # draw_vr_distance_2()
-    # draw_vr_distance_3()
-    draw_vr_distance_4()
+    draw_vr_distance_3()
