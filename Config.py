@@ -55,8 +55,17 @@ def gen_twocastle_graph(k, byzantine):
     return graph
 
 
-# def gen_line_graph(nodesize):
+def gen_line_graph(nodesize):
+    graph = nx.Graph()
+    graph.add_nodes_from(range(nodesize))
 
+    edge_list = [(i, i+1) for i in range(0, nodesize-1)]
+    graph.add_edges_from(edge_list)
+
+    nx.draw(graph)
+    plt.show()
+
+    return graph
 
 
 def metropolis_weight(G):
@@ -76,10 +85,10 @@ def metropolis_weight(G):
 
 
 optConfig = {
-    'nodeSize': 12,
-    'byzantineSize': 1,
+    'nodeSize': 10,
+    'byzantineSize': 0,
 
-    'iterations': 30000,
+    'iterations': 100000,
     'decayWeight': 0.01,
 
     'batchSize':32,
@@ -128,7 +137,7 @@ BRIDGEConfig['learningStep'] = 0.1     # without attack
 
 DrsaConfig = optConfig.copy()
 DrsaConfig['learningStep'] = 0.01
-DrsaConfig['penaltyPara'] = 0.5
+DrsaConfig['penaltyPara'] = 0
 
 DrsaSAGAConfig = optConfig.copy()
 DrsaSAGAConfig['learningStep'] = 0.005
@@ -163,6 +172,7 @@ regular = list(set(range(optConfig['nodeSize'])).difference(byzantine))  # æ­£å¸
 # generate topology graph
 # G = gen_graph(optConfig['nodeSize'], byzantine)
 G = gen_twocastle_graph(optConfig['nodeSize'] // 2, byzantine)
+# G = gen_line_graph(optConfig['nodeSize'])
 
 # generate weight matrix according to metropolis weight
 weight_matrix = metropolis_weight(G)

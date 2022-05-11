@@ -5,18 +5,20 @@ sys.path.append('../../')
 import numpy as np
 import pickle
 import random
+from scipy import stats
 from LoadMnist import getData, data_redistribute
 import Config
 from MainModel import Softmax, get_accuracy, get_vars, get_learning
-from Attacks import gaussian_attacks, without_attacks, alie_attacks, \
-                    same_value_attacks, sign_flipping_attacks, sample_duplicating_attacks, zero_sum_attacks
+from Attacks import without_attacks, same_value_attacks, \
+    sign_flipping_attacks, sample_duplicating_attacks, gaussian_attacks, alie_attacks
 import logging.config
+
 
 logging.config.fileConfig(fname='..\\..\\Log\\loginit.ini', disable_existing_loggers=False)
 logger = logging.getLogger("infoLogger")
 
 
-class OursWorker(Softmax):
+class BRIDGEWorker(Softmax):
 
     def __init__(self, para, id, workerPara, config, lr):
         """
@@ -37,13 +39,24 @@ class OursWorker(Softmax):
         """
         Aggregate the received models (consensus step)
         """
-        penalty = np.zeros((10, 784))
+        neighbors_para = []
         for j in range(self.config['nodeSize']):
-            if (self.id, j) in Config.G.edges():
-                penalty += np.sign(self.para - self.workerPara[j])
+            if (self.id, j) in Config.G.edges() or self.id == j:
+                neighbors_para.append(self.workerPara[j])
+        number_neighbor = len(neighbors_para)
+        neighbors_para = np.array(neighbors_para)
 
-        aggregate_gradient = self.config['penaltyPara'] * penalty
-        return aggregate_gradient
+        trimmed_range = self.config['byzantineSize'] / number_neighbor
+        aggregate_para = stats.trim_mean(neighbors_para, trimmed_range, axis=0)
+        return aggregate_para
+
+        # byzantineSize = self.config['byzantineSize']
+        # w_dimension = np.reshape(neighbors_para, (-1, 10 * 784)).T
+        # first = np.sort(w_dimension)
+        # second = first[:, byzantineSize: number_neighbor - byzantineSize]
+        # third = np.sum(second, axis=1) / (number_neighbor - 2 * byzantineSize)
+        # aggregate_para = np.reshape(third, (10, 784))
+        # return aggregate_para
 
     def train(self, image, label):
         """
@@ -54,32 +67,28 @@ class OursWorker(Softmax):
         :return:
         """
         partical_gradient = self.cal_minibatch_sto_grad(image, label)
-        aggregate_gradient = self.aggregate()
+        aggregate_para = self.aggregate()
 
-        # print('gradient_norm_{}:{}, {}, {}'.format(self.id, np.linalg.norm(partical_gradient), np.linalg.norm(aggregate_gradient), np.linalg.norm(partical_gradient + aggregate_gradient)))
-
-        self.para = self.para - self.lr * (partical_gradient + aggregate_gradient)
+        self.para = aggregate_para - self.lr * partical_gradient
 
 
-def ours(setting, attack, dataset, test_acc_flag):
+def bridge(setting, attack, dataset):
     """
-    Run our proposed method in iid and non-iid settings under Byzantine attacks
+    Run BRIDGE method in iid and non-iid settings under Byzantine attacks
 
     :param setting: 'iid' or 'noniid'
     :param attack: same-value attacks, sign-flipping attacks
                    sample-duplicating attacks(non-iid case)
-    :param flag_time_varying: whether the graph is time-varying
     """
     print(Config.byzantine)
     print(Config.regular)
 
     # Load the configurations
-    conf = Config.DrsaConfig.copy()
+    conf = Config.DPSGDConfig.copy()
     num_data = int(Config.mnistConfig['trainNum'] / conf['nodeSize'])
 
     classification_accuracy = []
     variances = []
-    para_norm = []
 
     # Get the training data
     image_train, label_train = getData('../../' + dataset + '/train-images.idx3-ubyte',
@@ -89,24 +98,17 @@ def ours(setting, attack, dataset, test_acc_flag):
     if setting == 'noniid':
         image_train, label_train = data_redistribute(image_train, label_train)
 
-    # Get the testing data
+   # Get the testing data
     image_test, label_test = getData ('../../' + dataset + '/t10k-images.idx3-ubyte',
                                       '../../' + dataset + '/t10k-labels.idx1-ubyte')
-    
-    # Get the optimal solution
-    if not test_acc_flag :
-        with open ("../../optimal-para/" + dataset + "-optimal-para-"+str(conf['penaltyPara'])+"-"+str(conf['byzantineSize'])+".pkl", 'rb') as f:
-            para_star = pickle.load (f)
-            print (para_star)
 
     # Parameter initialization
     workerPara = np.zeros((conf['nodeSize'], 10, 784))
-    # workerPara = np.random.randn(conf['nodeSize'], 10, 784)
 
     # Start training
     k = 0
-    max_iteration = conf['iterations']
     last_str = '-wa'
+    max_iteration = conf['iterations']
     select = random.choice(Config.regular)
 
     logger.info("Start!")
@@ -114,8 +116,8 @@ def ours(setting, attack, dataset, test_acc_flag):
         k += 1
         count = 0
         workerPara_memory = workerPara.copy()
-        lr = get_learning(conf['learningStep'], k) # compute decreasing learning rate
-        # lr = conf['learningStep']
+
+        lr = get_learning(conf['learningStep'], k)  # compute decreasing learning rate
 
         # Byzantine attacks
         if attack != None:
@@ -125,38 +127,33 @@ def ours(setting, attack, dataset, test_acc_flag):
         # and update their local models
         for id in range(conf['nodeSize']):
             para = workerPara[id]
-            model = OursWorker(para, id, workerPara_memory, conf, lr)
+            model = BRIDGEWorker(para, id, workerPara_memory, conf, lr)
             if setting == 'iid':
                 model.train(image_train[id * num_data: (id + 1) * num_data],
                             label_train[id * num_data: (id + 1) * num_data])
                 workerPara[id] = model.get_para
             elif setting == 'noniid':
                 if id in Config.regular:
-                    model.train (image_train[count * num_data : (count + 1) * num_data],
-                                 label_train[count * num_data : (count + 1) * num_data])
+                    model.train(image_train[count * num_data : (count + 1) * num_data],
+                                label_train[count * num_data : (count + 1) * num_data])
                     workerPara[id] = model.get_para
                     count += 1
-                
+
         # Testing
-        if test_acc_flag:
-            if k % 200 == 0 or k == 1:
-                acc = get_accuracy(workerPara[select], image_test, label_test)
-                classification_accuracy.append(acc)
-                var = get_vars(Config.regular, workerPara)
-                variances.append(var)
-                logger.info('the {}th iteration acc: {}, vars: {}'.format(k, acc, var))
-        else :
-            W_regular_norm = 0
-            for i in Config.regular :
-                W_regular_norm += np.linalg.norm (workerPara[i] - para_star) ** 2
-            para_norm.append (W_regular_norm)
-    print(classification_accuracy)
-    print(variances)
+        if k % 200 == 0 or k == 1:
+            acc = get_accuracy(workerPara[select], image_test, label_test)
+            classification_accuracy.append(acc)
+            var = get_vars(Config.regular, workerPara)
+            variances.append(var)
+            logger.info('the {}th iteration acc: {}, vars: {}'.format(k, acc, var))
+
+    # print(classification_accuracy)
+    # print(variances)
 
     # Save the experiment results
-    output = open("../../experiment-results-" + dataset + "/december"+last_str+".pkl", "wb")
+    output = open("../../experiment-results- " + dataset + "/bridge" + last_str + ".pkl", "wb")
     pickle.dump((classification_accuracy, variances), output, protocol=pickle.HIGHEST_PROTOCOL)
 
 
 if __name__ == '__main__':
-    ours(setting='noniid', attack=zero_sum_attacks, dataset='MNIST', test_acc_flag=True)
+    bridge(setting='noniid', attack=sample_duplicating_attacks, dataset='MNIST')

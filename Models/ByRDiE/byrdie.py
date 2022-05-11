@@ -5,6 +5,7 @@ sys.path.append("../../")
 import numpy as np
 import pickle
 import random
+from scipy import stats
 from tqdm import tqdm
 from LoadMnist import getData, data_redistribute
 import Config
@@ -47,12 +48,16 @@ class ByRDiEWorker(Softmax):
         number_neighbor = len(neighbors_para)
         neighbors_para = np.array(neighbors_para)
 
-        byzantineSize = self.config['byzantineSize']
-        first = neighbors_para[:, :, self.d].T
-        second = np.sort(first)[:, byzantineSize: number_neighbor - byzantineSize]
-        aggregate_para = np.sum(second, axis=1) / (number_neighbor - 2 * byzantineSize)
-
+        trimmed_range = self.config['byzantineSize'] / number_neighbor
+        aggregate_para = stats.trim_mean(neighbors_para[:, :, self.d], trimmed_range, axis=0)
         return aggregate_para
+
+        # byzantineSize = self.config['byzantineSize']
+        # first = neighbors_para[:, :, self.d].T
+        # second = np.sort(first)[:, byzantineSize: number_neighbor - byzantineSize]
+        # aggregate_para = np.sum(second, axis=1) / (number_neighbor - 2 * byzantineSize)
+
+        # return aggregate_para
 
     def train(self, image, label):
         """
@@ -151,7 +156,7 @@ def byrdie(setting, attack, dataset):
     # print(variances)
 
     # Save the experiment results
-    output = open("../../experiment-results-"+dataset+"/byrdie" + last_str + "-" + str(conf['byzantineSize']) + ".pkl", "wb")
+    output = open("../../experiment-results-"+dataset+"/byrdie" + last_str + ".pkl", "wb")
     pickle.dump((classification_accuracy, variances), output, protocol=pickle.HIGHEST_PROTOCOL)
 
 
